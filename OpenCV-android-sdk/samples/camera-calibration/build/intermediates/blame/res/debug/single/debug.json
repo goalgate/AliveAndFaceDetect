@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "C:\\Users\\zbsz\\AndroidStudioProjects\\AliveAndFaceDetect\\OpenCV-android-sdk\\samples\\camera-calibration\\build\\intermediates\\res\\merged\\debug\\layout_camera_calibration_surface_view.xml.flat",
+        "source": "C:\\Users\\zbsz\\AndroidStudioProjects\\AliveAndFaceDetect\\OpenCV-android-sdk\\samples\\camera-calibration\\res\\layout\\camera_calibration_surface_view.xml"
+    },
+    {
+        "merged": "C:\\Users\\zbsz\\AndroidStudioProjects\\AliveAndFaceDetect\\OpenCV-android-sdk\\samples\\camera-calibration\\build\\intermediates\\res\\merged\\debug\\drawable_icon.png.flat",
+        "source": "C:\\Users\\zbsz\\AndroidStudioProjects\\AliveAndFaceDetect\\OpenCV-android-sdk\\samples\\camera-calibration\\res\\drawable\\icon.png"
+    },
+    {
+        "merged": "C:\\Users\\zbsz\\AndroidStudioProjects\\AliveAndFaceDetect\\OpenCV-android-sdk\\samples\\camera-calibration\\build\\intermediates\\res\\merged\\debug\\menu_calibration.xml.flat",
+        "source": "C:\\Users\\zbsz\\AndroidStudioProjects\\AliveAndFaceDetect\\OpenCV-android-sdk\\samples\\camera-calibration\\res\\menu\\calibration.xml"
+    }
+]
