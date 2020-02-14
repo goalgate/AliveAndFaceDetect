@@ -48,14 +48,11 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
-import static android.content.Context.SENSOR_SERVICE;
-
 /**
  * Created by zbsz on 2017/5/19.
  */
 
 public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
-    final static String ApplicationName = PhotoModuleImpl3.class.getSimpleName();
 
     int CameraNum = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
@@ -83,14 +80,15 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
 
     float paramHeight;
 
-    private SensorManager manager;
-
-
-    private float[] gravity;
-
     PhotoPresenter.EquipmentType equipmentType = PhotoPresenter.EquipmentType.phone;
 
     private static final String TAG = PhotoModuleImpl3.class.getSimpleName();
+
+    public enum Direction {
+        up, left
+    }
+
+    private Direction direction = Direction.up;
 
     @Override
     public void setDisplay(final SurfaceHolder sHolder) {
@@ -258,39 +256,18 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
     @Override
     public void onPreviewFrame(final byte[] data, Camera camera) {
         camera.addCallbackBuffer(data);
+        global_bytes = data;
+        getOneShut();
         CalTaskThreadExecutor.getInstance().submit(new Runnable() {
             @Override
             public void run() {
                 ArrayList<Rect> rectS = new ArrayList<Rect>();
-                tools.detectRects(data, width, height, rectS);
+                tools.detectRects(global_bytes, width, height, rectS);
                 showFrame(rectS);
             }
         });
     }
 
-
-    private byte[] rotateYUVDegree90(byte[] data, int imageWidth, int imageHeight) {
-        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
-        // Rotate the Y luma
-        int i = 0;
-        for (int x = 0; x < imageWidth; x++) {
-            for (int y = imageHeight - 1; y >= 0; y--) {
-                yuv[i] = data[y * imageWidth + x];
-                i++;
-            }
-        }
-        // Rotate the U and V color components
-        i = imageWidth * imageHeight * 3 / 2 - 1;
-        for (int x = imageWidth - 1; x > 0; x = x - 2) {
-            for (int y = 0; y < imageHeight / 2; y++) {
-                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + x];
-                i--;
-                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + (x - 1)];
-                i--;
-            }
-        }
-        return yuv;
-    }
 
     private RectF rectF = new RectF();
     private Paint paint = new Paint();

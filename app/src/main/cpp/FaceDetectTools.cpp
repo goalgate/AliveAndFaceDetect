@@ -191,10 +191,15 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     jbyte *cbuf;
     cbuf = jenv->GetByteArrayElements(image, 0);
 
+    Mat dst;
     Mat imgData(h, w, CV_8UC1, (unsigned char *) cbuf);
+    Point center(imgData.cols/2,imgData.rows/2); //旋转中心
+    Mat rotMat = getRotationMatrix2D(center,90.0,1.0);
+    warpAffine(imgData,dst,rotMat,imgData.size());
+    
     try {
         vector<Rect> RectFaces;
-        ((DetectorAgregator *) thiz)->tracker->process(imgData);
+        ((DetectorAgregator *) thiz)->tracker->process(dst);
         ((DetectorAgregator *) thiz)->tracker->getObjects(RectFaces);
         jenv->ReleaseByteArrayElements(image, cbuf, 0);
         if (RectFaces.size() > 0) {

@@ -16,6 +16,7 @@ import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import com.blankj.utilcode.util.BarUtils;
 
@@ -38,6 +39,8 @@ public class MainActivity extends BaseActivity implements IPhotoView {
 
     TextureView textureView;
 
+    ImageView imageView;
+
     String[] permissions = new String[]{
             Manifest.permission.CAMERA,
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -52,6 +55,7 @@ public class MainActivity extends BaseActivity implements IPhotoView {
         setContentView(R.layout.activity_main);
         surfaceView = findViewById(R.id.mSurfaceView);
         textureView = findViewById(R.id.texture_view);
+        imageView = findViewById(R.id.image);
         requestRunPermisssion(permissions, new PermissionListener() {
             @Override
             public void onGranted() {
@@ -108,7 +112,7 @@ public class MainActivity extends BaseActivity implements IPhotoView {
 
     @Override
     public void onGetPhoto(Bitmap bmp) {
-
+        imageView.setImageBitmap(bmp);
     }
 
 
