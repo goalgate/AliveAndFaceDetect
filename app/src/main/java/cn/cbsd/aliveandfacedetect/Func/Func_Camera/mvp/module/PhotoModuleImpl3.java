@@ -12,6 +12,10 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -33,14 +37,18 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import cn.cbsd.aliveandfacedetect.AppInit;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter.PhotoPresenter;
 import cn.cbsd.aliveandfacedetect.R;
+import cn.cbsd.aliveandfacedetect.TESTActivity;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+
+import static android.content.Context.SENSOR_SERVICE;
 
 /**
  * Created by zbsz on 2017/5/19.
@@ -49,7 +57,10 @@ import io.reactivex.schedulers.Schedulers;
 public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
     final static String ApplicationName = PhotoModuleImpl3.class.getSimpleName();
 
+    int CameraNum = Camera.CameraInfo.CAMERA_FACING_FRONT;
+
     Camera camera;
+
     SurfaceView mSurfaceView;
 
     TextureView mTextureView;
@@ -72,7 +83,12 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
 
     float paramHeight;
 
-    PhotoPresenter.MyOrientation myOrientation = PhotoPresenter.MyOrientation.landscape;
+    private SensorManager manager;
+
+
+    private float[] gravity;
+
+    PhotoPresenter.EquipmentType equipmentType = PhotoPresenter.EquipmentType.phone;
 
     private static final String TAG = PhotoModuleImpl3.class.getSimpleName();
 
@@ -86,22 +102,19 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
-
     @Override
-    public void Init(SurfaceView surfaceView, TextureView textureView, IOnSetListener listener, PhotoPresenter.MyOrientation orientation) {
+    public void Init(SurfaceView surfaceView, TextureView textureView, IOnSetListener listener, PhotoPresenter.EquipmentType equipmentType) {
         this.callback = listener;
         this.mTextureView = textureView;
         this.mSurfaceView = surfaceView;
-        this.myOrientation = orientation;
+        this.equipmentType = equipmentType;
         tools.start();
-
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
-                safeCameraOpen(0);
+                safeCameraOpen(CameraNum);
                 setCameraParemeter();
                 setDisplay(surfaceHolder);
             }
@@ -134,17 +147,24 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
         Camera.Size size = camera.getParameters().getPreviewSize(); //获取预览大小
         Log.e("width", String.valueOf(width = size.width));
         Log.e("height", String.valueOf(height = size.height));
-        Log.e("screen_width", String.valueOf(surfaceViewWidth = ScreenUtils.getScreenWidth()));
-        Log.e("screen_height", String.valueOf(surfaceViewHeight = ScreenUtils.getScreenHeight()));
-        paramWidth = (float) surfaceViewWidth / width;
-        paramHeight = (float) surfaceViewHeight / height;
+        Log.e("surface_width", String.valueOf(surfaceViewWidth = mSurfaceView.getWidth()));
+        Log.e("surface_height", String.valueOf(surfaceViewHeight = mSurfaceView.getHeight()));
+        switch (equipmentType) {
+            case phone:
+                break;
+            case Custom_machine:
+                paramWidth = (float) surfaceViewWidth / width;
+                paramHeight = (float) surfaceViewHeight / height;
+                break;
+        }
+
         parameters.setPictureFormat(ImageFormat.JPEG);
         parameters.set("jpeg-quality", 100);
         camera.setParameters(parameters);
-        switch (myOrientation) {
-            case vertical:
+        switch (equipmentType) {
+            case Custom_machine:
                 break;
-            case landscape:
+            case phone:
                 camera.setDisplayOrientation(90);
                 break;
             default:
@@ -234,6 +254,7 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
                 });
     }
 
+
     @Override
     public void onPreviewFrame(final byte[] data, Camera camera) {
         camera.addCallbackBuffer(data);
@@ -247,7 +268,30 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
         });
     }
 
-    private Rect rect = new Rect();
+
+    private byte[] rotateYUVDegree90(byte[] data, int imageWidth, int imageHeight) {
+        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
+        // Rotate the Y luma
+        int i = 0;
+        for (int x = 0; x < imageWidth; x++) {
+            for (int y = imageHeight - 1; y >= 0; y--) {
+                yuv[i] = data[y * imageWidth + x];
+                i++;
+            }
+        }
+        // Rotate the U and V color components
+        i = imageWidth * imageHeight * 3 / 2 - 1;
+        for (int x = imageWidth - 1; x > 0; x = x - 2) {
+            for (int y = 0; y < imageHeight / 2; y++) {
+                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + x];
+                i--;
+                yuv[i] = data[(imageWidth * imageHeight) + (y * imageWidth) + (x - 1)];
+                i--;
+            }
+        }
+        return yuv;
+    }
+
     private RectF rectF = new RectF();
     private Paint paint = new Paint();
 
@@ -274,33 +318,28 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
             mTextureView.unlockCanvasAndPost(canvas);
             return;
         }
-
-        switch (myOrientation) {
-            case landscape:
-//                left = list.get(0).bottom ;
-//                top = list.get(0).right ;
-//                right = list.get(0). top;
-//                bottom = list.get(0).left ;
-
-                left = height - (list.get(0).top) ;
-                top = list.get(0).left / paramWidth;
-                right = height - list.get(0).bottom ;
-                bottom = list.get(0).right / paramWidth;
-                Log.e("point",String.valueOf(left)+" " +String.valueOf(top)+" " +String.valueOf(right)+" " +String.valueOf(bottom));
+        switch (equipmentType) {
+            case phone:
+                switch (CameraNum) {
+                    case Camera.CameraInfo.CAMERA_FACING_BACK:
+                        left = height - (list.get(0).top);
+                        top = list.get(0).left * ((float) surfaceViewHeight / width);
+                        right = height - list.get(0).bottom;
+                        bottom = list.get(0).right * ((float) surfaceViewHeight / width);
+                        break;
+                    case Camera.CameraInfo.CAMERA_FACING_FRONT:
+                        left = height - (list.get(0).top);
+                        top = (width - list.get(0).left) * ((float) surfaceViewHeight / width);
+                        right = height - list.get(0).bottom;
+                        bottom = (width - list.get(0).right) * ((float) surfaceViewHeight / width);
+                        break;
+                }
                 break;
-            case vertical:
-//                int left = (int) (list.get(0).left * paramWidth);
-//                int top = (int) (list.get(0).top * paramHeight);
-//                int right = (int) (list.get(0).right * paramWidth);
-//                int bottom = (int) (list.get(0).bottom * paramHeight);
+            case Custom_machine:
                 left = list.get(0).left * paramWidth;
                 top = list.get(0).top * paramHeight;
                 right = list.get(0).right * paramWidth;
                 bottom = list.get(0).bottom * paramHeight;
-//                rect = new Rect(list.get(0).left,
-//                        (list.get(0).top),
-//                        (list.get(0).right),
-//                        (list.get(0).bottom));
                 break;
 
         }
@@ -340,7 +379,7 @@ public class PhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
 
 class CalTaskThreadExecutor {
 
-    private static final ExecutorService instance = new ThreadPoolExecutor(1, 1,
+    private static final ExecutorService instance = new ThreadPoolExecutor(1, 3,
             0L, TimeUnit.MILLISECONDS,
             new SynchronousQueue<Runnable>(),
             new ThreadFactory() {

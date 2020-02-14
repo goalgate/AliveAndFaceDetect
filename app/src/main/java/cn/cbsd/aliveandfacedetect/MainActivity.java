@@ -71,8 +71,8 @@ public class MainActivity extends BaseActivity implements IPhotoView {
             }
         });
         pp.OpenCVPrepare(this);
-        pp.Init(surfaceView, textureView, PhotoPresenter.MyOrientation.landscape);
-        pp.setMinFaceSize(20);
+        pp.Init(surfaceView, textureView, PhotoPresenter.EquipmentType.phone);
+        pp.setMinFaceSize(50);
     }
 
     @Override

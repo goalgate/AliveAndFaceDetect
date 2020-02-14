@@ -16,7 +16,7 @@ import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter.PhotoPresenter;
 
 public interface IPhotoModule {
 
-    void Init(SurfaceView surfaceView, TextureView textureView, IOnSetListener listener, PhotoPresenter.MyOrientation orientation);
+    void Init(SurfaceView surfaceView, TextureView textureView, IOnSetListener listener, PhotoPresenter.EquipmentType orientation);
 
 //    void setParameter(SurfaceView surfaceView , TextureView textureView, IOnSetListener listener, PhotoPresenter.MyOrientation orientation);
 

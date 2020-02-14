@@ -26,9 +26,11 @@ public class PhotoPresenter {
         return instance;
     }
 
-    public enum MyOrientation {
-        landscape, vertical
+    public enum EquipmentType {
+        phone, Custom_machine
     }
+
+
 
     public void PhotoPresenterSetView(IPhotoView view) {
         this.view = view;
@@ -37,7 +39,7 @@ public class PhotoPresenter {
     IPhotoModule photoModule = new PhotoModuleImpl3();
 
 
-    public void Init(SurfaceView surfaceView, TextureView textureView,MyOrientation orientation){
+    public void Init(SurfaceView surfaceView, TextureView textureView,EquipmentType equipmentType){
         try {
             photoModule.Init(surfaceView, textureView, new IPhotoModule.IOnSetListener() {
                 @Override
@@ -49,7 +51,7 @@ public class PhotoPresenter {
                 public void onGetPhoto(Bitmap bmp) {
                     view.onGetPhoto(bmp);
                 }
-            },orientation);
+            },equipmentType);
         }catch (NullPointerException e){
             Log.e("setParameter",e.toString());
         }
@@ -91,9 +93,9 @@ public class PhotoPresenter {
 
     public void setMinFaceSize(int size){
         try {
-            photoModule.getOneShut();
+            photoModule.setMinFaceSize(size);
         }catch (NullPointerException e){
-            Log.e("getOneShut",e.toString());
+            Log.e("setMinFaceSize",e.toString());
         }
     }
 

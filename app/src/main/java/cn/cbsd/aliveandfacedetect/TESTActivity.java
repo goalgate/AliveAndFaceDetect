@@ -6,6 +6,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 public class TESTActivity extends Activity {
@@ -39,8 +40,14 @@ public class TESTActivity extends Activity {
         public void onSensorChanged(SensorEvent event) {
             if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
                 geomagnetic = event.values;
+
+                Log.e("geo", "1:" + geomagnetic[0] +
+                        "2:" + geomagnetic[1] +
+                        "3:" + geomagnetic[2]);
             }
             if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+
+
                 gravity = event.values;
                 getValue();
             }
@@ -67,17 +74,24 @@ public class TESTActivity extends Activity {
 
     public void getValue() {
         // r从这里返回
-        SensorManager.getRotationMatrix(r, null, gravity, geomagnetic);
-        //values从这里返回
-        SensorManager.getOrientation(r, values);
-        //提取数据
-        double azimuth = Math.toDegrees(values[0]);
-        if (azimuth<0) {
-            azimuth=azimuth+360;
-        }
-        double pitch = Math.toDegrees(values[1]);
-        double roll = Math.toDegrees(values[2]);
-        tv.invalidate();
-        tv.setText("Azimuth：" + (int)azimuth + "\nPitch：" + (int)pitch + "\nRoll：" + (int)roll);
+        float x = gravity[SensorManager.DATA_X];
+        float y = gravity[SensorManager.DATA_Y];
+        float z = gravity[SensorManager.DATA_Z];
+        tv.setText("x：" + (int) x + "\ny：" + (int) y + "\nz：" + (int) z);
+
+//        SensorManager.getRotationMatrix(r, null, gravity, geomagnetic);
+//        //values从这里返回
+//        SensorManager.getOrientation(r, values);
+//        //提取数据
+//        double azimuth = Math.toDegrees(values[0]);
+//        if (azimuth < 0) {
+//            azimuth = azimuth + 360;
+//        }
+//        double pitch = Math.toDegrees(values[1]);
+//        double roll = Math.toDegrees(values[2]);
+//        tv.invalidate();
+//        tv.setText("Azimuth：" + (int) azimuth + "\nPitch：" + (int) pitch + "\nRoll：" + (int) roll);
+//
     }
+
 }
