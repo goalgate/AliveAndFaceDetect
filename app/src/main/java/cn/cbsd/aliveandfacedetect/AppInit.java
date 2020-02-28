@@ -32,7 +32,5 @@ public class AppInit extends Application {
         LeakCanary.install(this);
 
         Utils.init(getContext());
-
-
     }
 }

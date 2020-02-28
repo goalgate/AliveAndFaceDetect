@@ -178,6 +178,66 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
 }
 
 extern "C"
+JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDetectRectsRotate90
+        (JNIEnv *jenv, jclass, jlong thiz, jbyteArray image, jint w, jint h, jobject list_obj) {
+
+    jclass RectCls = jenv->FindClass("android/graphics/Rect");
+    jmethodID Rect_costruct = jenv->GetMethodID(RectCls, "<init>", "()V");
+    jmethodID Rect_set = jenv->GetMethodID(RectCls, "set", "(IIII)V");
+    jobject Rect_obj = jenv->NewObject(RectCls, Rect_costruct);
+    jclass listFcls = jenv->FindClass("java/util/ArrayList");
+    jmethodID list_add = jenv->GetMethodID(listFcls, "add", "(Ljava/lang/Object;)Z");
+
+    jbyte *cbuf;
+    cbuf = jenv->GetByteArrayElements(image, 0);
+
+
+    Mat dst;
+    Mat imgData(h, w, CV_8UC1, (unsigned char *) cbuf);
+    Point center(imgData.cols/2,imgData.rows/2); //旋转中心
+    Mat rotMat = getRotationMatrix2D(center,90.0,1.0);
+    warpAffine(imgData,dst,rotMat,imgData.size());
+    
+    try {
+        vector<Rect> RectFaces;
+        ((DetectorAgregator *) thiz)->tracker->process(imgData);
+        ((DetectorAgregator *) thiz)->tracker->getObjects(RectFaces);
+        jenv->ReleaseByteArrayElements(image, cbuf, 0);
+        if (RectFaces.size() > 0) {
+            __android_log_print(ANDROID_LOG_DEBUG, "人脸数", "FaceSize : %d",RectFaces.size());
+
+            for (int i = 0; i < RectFaces.size(); i++) {
+                jenv->CallVoidMethod(Rect_obj, Rect_set,
+                                     RectFaces[i].tl().x,
+                                     RectFaces[i].tl().y,
+                                     RectFaces[i].br().x,
+                                     RectFaces[i].br().y);
+                jenv->CallBooleanMethod(list_obj, list_add, Rect_obj);
+            }
+        }
+        jenv->DeleteLocalRef(Rect_obj);
+        jenv->DeleteLocalRef(RectCls);
+        jenv->DeleteLocalRef(listFcls);
+
+        LOGD("nativeDetectRList END");
+        //*((Mat*)faces) = Mat(RectFaces, true);
+    }
+    catch (const cv::Exception &e) {
+        LOGE("nativeCreateObject caught cv::Exception: %s", e.what());
+        jclass je = jenv->FindClass("cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
+        if (!je)
+            je = jenv->FindClass("java/lang/Exception");
+        jenv->ThrowNew(je, e.what());
+    }
+    catch (...) {
+        LOGE("nativeDetect caught unknown exception");
+        jclass je = jenv->FindClass("java/lang/Exception");
+        jenv->ThrowNew(je, "Unknown exception in JNI code DetectionBasedTracker.nativeDetect()");
+    }
+
+}
+
+extern "C"
 JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDetectRects
         (JNIEnv *jenv, jclass, jlong thiz, jbyteArray image, jint w, jint h, jobject list_obj) {
 
@@ -191,15 +251,16 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     jbyte *cbuf;
     cbuf = jenv->GetByteArrayElements(image, 0);
 
-    Mat dst;
+
+//    Mat dst;
     Mat imgData(h, w, CV_8UC1, (unsigned char *) cbuf);
-    Point center(imgData.cols/2,imgData.rows/2); //旋转中心
-    Mat rotMat = getRotationMatrix2D(center,90.0,1.0);
-    warpAffine(imgData,dst,rotMat,imgData.size());
-    
+//    Point center(imgData.cols/2,imgData.rows/2); //旋转中心
+//    Mat rotMat = getRotationMatrix2D(center,90.0,1.0);
+//    warpAffine(imgData,dst,rotMat,imgData.size());
+
     try {
         vector<Rect> RectFaces;
-        ((DetectorAgregator *) thiz)->tracker->process(dst);
+        ((DetectorAgregator *) thiz)->tracker->process(imgData);
         ((DetectorAgregator *) thiz)->tracker->getObjects(RectFaces);
         jenv->ReleaseByteArrayElements(image, cbuf, 0);
         if (RectFaces.size() > 0) {

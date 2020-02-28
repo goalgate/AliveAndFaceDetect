@@ -1,14 +1,15 @@
 package cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
 
+import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.FaceConfig;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.FaceDetectTools;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.IPhotoModule;
-import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.PhotoModuleImpl3;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.view.IPhotoView;
 
 
@@ -36,12 +37,12 @@ public class PhotoPresenter {
         this.view = view;
     }
 
-    IPhotoModule photoModule = new PhotoModuleImpl3();
+    IPhotoModule photoModule = FaceConfig.camera_module();
 
 
-    public void Init(SurfaceView surfaceView, TextureView textureView,EquipmentType equipmentType){
+    public void Init(SurfaceView ShowView,SurfaceView FaceDetectView, TextureView textureView){
         try {
-            photoModule.Init(surfaceView, textureView, new IPhotoModule.IOnSetListener() {
+            photoModule.Init(ShowView ,FaceDetectView , textureView, new IPhotoModule.IOnSetListener() {
                 @Override
                 public void onBtnText(String msg) {
                     view.onCaremaText(msg);
@@ -51,16 +52,16 @@ public class PhotoPresenter {
                 public void onGetPhoto(Bitmap bmp) {
                     view.onGetPhoto(bmp);
                 }
-            },equipmentType);
+            });
         }catch (NullPointerException e){
             Log.e("setParameter",e.toString());
         }
     }
 
 
-    public void setDisplay(SurfaceHolder surfaceHolder){
+    public void setDisplay(){
         try {
-            photoModule.setDisplay(surfaceHolder);
+            photoModule.setDisplay();
         }catch (NullPointerException e){
             Log.e("setDisplay",e.toString());
         }

@@ -1,33 +1,18 @@
 package cn.cbsd.aliveandfacedetect;
 
 import android.Manifest;
-import android.content.Context;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.TextureView;
-import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 
 import com.blankj.utilcode.util.BarUtils;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter.PhotoPresenter;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.view.IPhotoView;
-import io.reactivex.Observable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends BaseActivity implements IPhotoView {
 
@@ -35,7 +20,9 @@ public class MainActivity extends BaseActivity implements IPhotoView {
 
     PhotoPresenter pp = PhotoPresenter.getInstance();
 
-    SurfaceView surfaceView;
+    SurfaceView FaceDetect_sView;
+
+    SurfaceView Showing_sView;
 
     TextureView textureView;
 
@@ -53,7 +40,8 @@ public class MainActivity extends BaseActivity implements IPhotoView {
         super.onCreate(savedInstanceState);
         BarUtils.hideStatusBar(this);
         setContentView(R.layout.activity_main);
-        surfaceView = findViewById(R.id.mSurfaceView);
+        FaceDetect_sView = (SurfaceView) findViewById(R.id.FaceDetect_sView);
+        Showing_sView = (SurfaceView) findViewById(R.id.Showing_sView);
         textureView = findViewById(R.id.texture_view);
         imageView = findViewById(R.id.image);
         requestRunPermisssion(permissions, new PermissionListener() {
@@ -68,14 +56,14 @@ public class MainActivity extends BaseActivity implements IPhotoView {
 
             }
         });
-        surfaceView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                pp.getOneShut();
-            }
-        });
+//        surfaceView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                pp.getOneShut();
+//            }
+//        });
         pp.OpenCVPrepare(this);
-        pp.Init(surfaceView, textureView, PhotoPresenter.EquipmentType.phone);
+        pp.Init(Showing_sView,FaceDetect_sView, textureView);
         pp.setMinFaceSize(50);
     }
 
@@ -88,7 +76,7 @@ public class MainActivity extends BaseActivity implements IPhotoView {
     protected void onResume() {
         super.onResume();
         pp.PhotoPresenterSetView(this);
-        pp.setDisplay(surfaceView.getHolder());
+        pp.setDisplay();
     }
 
     @Override

@@ -34,6 +34,10 @@ public class FaceDetectTools {
         nativeDetectRects(mNativeObj, inputImage, w, h, rectS);
     }
 
+    public void detectRectsRotate90(byte[] inputImage, int w, int h, ArrayList<Rect> rectS) {
+        nativeDetectRectsRotate90(mNativeObj, inputImage, w, h, rectS);
+    }
+
     public void release() {
         nativeDestroyObject(mNativeObj);
         mNativeObj = 0;
@@ -51,5 +55,6 @@ public class FaceDetectTools {
 
     private static native void nativeDetectRects(long thiz, byte[] inputImage, int w, int h, ArrayList<Rect> rectS);
 
+    private static native void nativeDetectRectsRotate90(long thiz, byte[] inputImage, int w, int h, ArrayList<Rect> rectS);
 
 }

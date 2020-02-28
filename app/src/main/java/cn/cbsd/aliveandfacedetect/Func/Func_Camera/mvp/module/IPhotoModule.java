@@ -2,6 +2,7 @@ package cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.hardware.Camera;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
@@ -16,18 +17,15 @@ import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter.PhotoPresenter;
 
 public interface IPhotoModule {
 
-    void Init(SurfaceView surfaceView, TextureView textureView, IOnSetListener listener, PhotoPresenter.EquipmentType orientation);
+    void Init(SurfaceView ShowView,SurfaceView FaceDetectView, TextureView textureView, IOnSetListener listener);
 
-//    void setParameter(SurfaceView surfaceView , TextureView textureView, IOnSetListener listener, PhotoPresenter.MyOrientation orientation);
-
-    void setDisplay(SurfaceHolder surfaceHolder);
+    void setDisplay();
 
     void capture();//拍照按钮点击事件
 
     void getOneShut();
 
     void onActivityDestroy();
-
 
     FaceDetectTools OpenCVPrepare(Context context);
 
