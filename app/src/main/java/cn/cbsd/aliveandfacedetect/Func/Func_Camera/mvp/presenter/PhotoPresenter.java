@@ -1,4 +1,5 @@
 package cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
@@ -13,24 +14,24 @@ import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.IPhotoModule;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.view.IPhotoView;
 
 
-
-
 public class PhotoPresenter {
 
     private IPhotoView view;
 
-    private static PhotoPresenter instance=null;
-    private PhotoPresenter(){}
+    private static PhotoPresenter instance = null;
+
+    private PhotoPresenter() {
+    }
+
     public static PhotoPresenter getInstance() {
-        if(instance==null)
-            instance=new PhotoPresenter();
+        if (instance == null)
+            instance = new PhotoPresenter();
         return instance;
     }
 
     public enum EquipmentType {
         phone, Custom_machine
     }
-
 
 
     public void PhotoPresenterSetView(IPhotoView view) {
@@ -40,9 +41,13 @@ public class PhotoPresenter {
     IPhotoModule photoModule = FaceConfig.camera_module();
 
 
-    public void Init(SurfaceView ShowView,SurfaceView FaceDetectView, TextureView textureView){
+    public void Init(SurfaceView ShowView, SurfaceView FaceDetectView, TextureView textureView) {
         try {
-            photoModule.Init(ShowView ,FaceDetectView , textureView, new IPhotoModule.IOnSetListener() {
+
+            if (FaceDetectView == null) {
+                FaceDetectView = ShowView;
+            }
+            photoModule.Init(ShowView, FaceDetectView, textureView, new IPhotoModule.IOnSetListener() {
                 @Override
                 public void onBtnText(String msg) {
                     view.onCaremaText(msg);
@@ -53,55 +58,55 @@ public class PhotoPresenter {
                     view.onGetPhoto(bmp);
                 }
             });
-        }catch (NullPointerException e){
-            Log.e("setParameter",e.toString());
+        } catch (NullPointerException e) {
+            Log.e("setParameter", e.toString());
         }
     }
 
 
-    public void setDisplay(){
+    public void setDisplay() {
         try {
             photoModule.setDisplay();
-        }catch (NullPointerException e){
-            Log.e("setDisplay",e.toString());
+        } catch (NullPointerException e) {
+            Log.e("setDisplay", e.toString());
         }
     }
 
-    public void capture(){
+    public void capture() {
         try {
             photoModule.capture();
-        }catch (NullPointerException e){
-            Log.e("capture",e.toString());
+        } catch (NullPointerException e) {
+            Log.e("capture", e.toString());
         }
 
     }
 
 
-    public void onActivityDestroy(){
+    public void onActivityDestroy() {
         try {
             photoModule.onActivityDestroy();
-        }catch (NullPointerException e){
-            Log.e("onActivityDestroy",e.toString());
+        } catch (NullPointerException e) {
+            Log.e("onActivityDestroy", e.toString());
         }
     }
-    public void getOneShut(){
+
+    public void getOneShut() {
         try {
             photoModule.getOneShut();
-        }catch (NullPointerException e){
-            Log.e("getOneShut",e.toString());
+        } catch (NullPointerException e) {
+            Log.e("getOneShut", e.toString());
         }
     }
 
-    public void setMinFaceSize(int size){
+    public void setMinFaceSize(int size) {
         try {
             photoModule.setMinFaceSize(size);
-        }catch (NullPointerException e){
-            Log.e("setMinFaceSize",e.toString());
+        } catch (NullPointerException e) {
+            Log.e("setMinFaceSize", e.toString());
         }
     }
 
-
-    public FaceDetectTools OpenCVPrepare(Context context){
+    public FaceDetectTools OpenCVPrepare(Context context) {
         return photoModule.OpenCVPrepare(context);
     }
 }

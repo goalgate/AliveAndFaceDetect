@@ -200,7 +200,7 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     
     try {
         vector<Rect> RectFaces;
-        ((DetectorAgregator *) thiz)->tracker->process(imgData);
+        ((DetectorAgregator *) thiz)->tracker->process(dst);
         ((DetectorAgregator *) thiz)->tracker->getObjects(RectFaces);
         jenv->ReleaseByteArrayElements(image, cbuf, 0);
         if (RectFaces.size() > 0) {

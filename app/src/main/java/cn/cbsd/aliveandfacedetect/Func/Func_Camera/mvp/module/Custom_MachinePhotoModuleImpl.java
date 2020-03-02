@@ -94,7 +94,6 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
     public void Init(SurfaceView ShowView, SurfaceView FaceDetectView, TextureView textureView, IOnSetListener listener) {
         this.callback = listener;
         this.mTextureView = textureView;
-
         tools.start();
         if(FaceConfig.isBinocular){
             this.Showing_sView = ShowView;
@@ -107,7 +106,7 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
                     Camera.Parameters parameters = Showing_cam.getParameters();
                     parameters.setPictureFormat(ImageFormat.JPEG);
                     parameters.set("jpeg-quality", 100);
-                    parameters.setPreviewSize(640,480);
+                    parameters.setPreviewSize(FaceConfig.width,FaceConfig.height);
                     Showing_cam.setParameters(parameters);
                     Showing_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
                     Showing_cam.setPreviewCallback(new Camera.PreviewCallback() {
@@ -213,10 +212,6 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
 
     }
 
-    private void setCameraParemeter(Camera camera,SurfaceView surfaceView) {
-
-    }
-
 
     @Override
     public void onActivityDestroy() {
@@ -255,16 +250,6 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
         }
     };
 
-    private void safeCameraOpen(Camera camera ,int id) {
-        try {
-            releaseCameraAndPreview(camera);
-            camera = Camera.open(id);
-            Log.e("fdfd","Fdfdf");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 
     private void releaseCameraAndPreview(Camera camera) {
         if (camera != null) {

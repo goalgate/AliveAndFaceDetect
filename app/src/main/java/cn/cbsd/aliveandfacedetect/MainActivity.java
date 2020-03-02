@@ -56,12 +56,6 @@ public class MainActivity extends BaseActivity implements IPhotoView {
 
             }
         });
-//        surfaceView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                pp.getOneShut();
-//            }
-//        });
         pp.OpenCVPrepare(this);
         pp.Init(Showing_sView,FaceDetect_sView, textureView);
         pp.setMinFaceSize(50);
