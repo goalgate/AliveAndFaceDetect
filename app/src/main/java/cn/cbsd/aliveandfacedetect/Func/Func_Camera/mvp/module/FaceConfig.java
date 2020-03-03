@@ -15,7 +15,7 @@ public class FaceConfig {
     public static PhotoPresenter.EquipmentType equipmentType = PhotoPresenter.EquipmentType.phone;
 
 //    public static int FaceDetectCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
-//
+////
 //    public static int ShowingCamera = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
     public static int FaceDetectCamera = Camera.CameraInfo.CAMERA_FACING_FRONT;

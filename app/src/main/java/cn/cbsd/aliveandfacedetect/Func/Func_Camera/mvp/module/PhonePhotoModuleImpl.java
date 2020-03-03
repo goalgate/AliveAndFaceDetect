@@ -208,6 +208,7 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
             public void run() {
                 ArrayList<Rect> rectS = new ArrayList<Rect>();
                 tools.detectRectsRotate90(global_bytes, width, height, rectS);
+//                getOneShut();
                 showFrame(rectS);
             }
         });
@@ -254,10 +255,11 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 //                bottom = (surfaceViewWidth - list.get(0).right) * ((float) surfaceViewHeight / width);
 //                break;
 //        }
-        left = (surfaceViewWidth - list.get(0).left) * ((float) width / surfaceViewWidth);
-        top = list.get(0).top * ((float) height / surfaceViewHeight);
-        right = (surfaceViewWidth - list.get(0).right) * ((float) width / surfaceViewWidth);
-        bottom = list.get(0).bottom * ((float) height / surfaceViewHeight);
+        left = ((surfaceViewWidth + width) / 2) - list.get(0).left;
+        top = (list.get(0).top) + (((surfaceViewHeight - height) / 2) * ((float) list.get(0).top / surfaceViewHeight)) + 80;
+        right = ((surfaceViewWidth + width) / 2) - list.get(0).right;
+        bottom = (list.get(0).bottom) + (((surfaceViewHeight - height) / 2) * ((float) list.get(0).bottom / surfaceViewHeight)) + 80;
+
 
         rectF = new RectF(left, top, right, bottom);
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);

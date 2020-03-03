@@ -343,7 +343,7 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
     public FaceDetectTools OpenCVPrepare(Context context) {
         try {
             // load cascade file from application resources
-            InputStream is = context.getResources().openRawResource(R.raw.lbpcascade_frontalface);
+            InputStream is = context.getResources().openRawResource(R.raw.haarcascade_frontalface_default);
             File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
             File mCascadeFile = new File(cascadeDir, "lbpcascade_frontalface.xml");
             FileOutputStream os = new FileOutputStream(mCascadeFile);

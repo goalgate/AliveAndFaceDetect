@@ -197,7 +197,12 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     Point center(imgData.cols/2,imgData.rows/2); //旋转中心
     Mat rotMat = getRotationMatrix2D(center,90.0,1.0);
     warpAffine(imgData,dst,rotMat,imgData.size());
-    
+
+
+//    int size = dst.total() * dst.elemSize();
+//    jbyte *bytes = new jbyte[size];  // you will have to delete[] that later
+//    memcpy(bytes,dst.data,size * sizeof(jbyte));
+//    jenv->SetByteArrayRegion(image,0,size,bytes);
     try {
         vector<Rect> RectFaces;
         ((DetectorAgregator *) thiz)->tracker->process(dst);
