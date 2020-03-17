@@ -12,10 +12,14 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.text.Layout;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
+import android.view.ViewGroup;
+
+import com.blankj.utilcode.util.ScreenUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -23,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import cn.cbsd.aliveandfacedetect.R;
 import io.reactivex.Observable;
@@ -56,8 +61,9 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 
     private static final String TAG = PhonePhotoModuleImpl.class.getSimpleName();
 
+
     @Override
-    public void Init(SurfaceView ShowView, SurfaceView FaceDetectView, TextureView textureView, IOnSetListener listener) {
+    public void Init(SurfaceView ShowView, final SurfaceView FaceDetectView, TextureView textureView, IOnSetListener listener) {
         this.FaceDetect_sView = FaceDetectView;
         this.callback = listener;
         this.mTextureView = textureView;
@@ -66,17 +72,19 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
                 releaseCameraAndPreview(FaceDetect_cam);
                 FaceDetect_cam = Camera.open(FaceConfig.FaceDetectCamera);
-                Camera.Parameters parameters = FaceDetect_cam.getParameters();
                 FaceDetect_cam.setDisplayOrientation(90);
-                Camera.Size size = FaceDetect_cam.getParameters().getPreviewSize(); //获取预览大小
-                parameters.setPreviewSize(FaceConfig.width, FaceConfig.height);
-                Log.e("width", String.valueOf(width = size.width));
-                Log.e("height", String.valueOf(height = size.height));
-                Log.e("surface_width", String.valueOf(surfaceViewWidth = FaceDetect_sView.getWidth()));
-                Log.e("surface_height", String.valueOf(surfaceViewHeight = FaceDetect_sView.getHeight()));
+                Camera.Parameters parameters = FaceDetect_cam.getParameters();
+                List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
+                Camera.Size settingSize = ChooseBestCameraSize(sizes, FaceDetectView.getWidth(), FaceDetectView.getHeight());
+                parameters.setPreviewSize(settingSize.width, settingSize.height);
                 parameters.setPictureFormat(ImageFormat.JPEG);
                 parameters.set("jpeg-quality", 100);
                 FaceDetect_cam.setParameters(parameters);
+                Camera.Size sizeResult = parameters.getPreviewSize();
+                Log.e("width", String.valueOf(width = sizeResult.width));
+                Log.e("height", String.valueOf(height = sizeResult.height));
+                Log.e("surfaceViewWidth", String.valueOf(surfaceViewWidth = FaceDetectView.getWidth()));
+                Log.e("surfaceViewHeight", String.valueOf(surfaceViewHeight = FaceDetectView.getHeight()));
                 FaceDetect_cam.setPreviewCallbackWithBuffer(PhonePhotoModuleImpl.this);
                 FaceDetect_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
                 FaceDetect_cam.setPreviewCallback(PhonePhotoModuleImpl.this);
@@ -90,6 +98,7 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 
             @Override
             public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+                FaceDetect_cam.setPreviewCallback(null);
                 releaseCamera(FaceDetect_cam);
             }
         });
@@ -162,6 +171,7 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 
     @Override
     public void onActivityDestroy() {
+
         FaceDetect_sView = null;
         mTextureView = null;
         tools.stop();
@@ -202,13 +212,11 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
     public void onPreviewFrame(byte[] bytes, Camera camera) {
         camera.addCallbackBuffer(bytes);
         global_bytes = bytes;
-//        getOneShut();
         CalTaskThreadExecutor.getInstance().submit(new Runnable() {
             @Override
             public void run() {
                 ArrayList<Rect> rectS = new ArrayList<Rect>();
                 tools.detectRectsRotate90(global_bytes, width, height, rectS);
-//                getOneShut();
                 showFrame(rectS);
             }
         });
@@ -255,11 +263,11 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 //                bottom = (surfaceViewWidth - list.get(0).right) * ((float) surfaceViewHeight / width);
 //                break;
 //        }
-        left = ((surfaceViewWidth + width) / 2) - list.get(0).left;
-        top = (list.get(0).top) + (((surfaceViewHeight - height) / 2) * ((float) list.get(0).top / surfaceViewHeight)) + 80;
-        right = ((surfaceViewWidth + width) / 2) - list.get(0).right;
-        bottom = (list.get(0).bottom) + (((surfaceViewHeight - height) / 2) * ((float) list.get(0).bottom / surfaceViewHeight)) + 80;
-
+//        left = ((surfaceViewWidth + width) / 2) - list.get(0).left;
+        left = surfaceViewHeight - list.get(0).left - ((surfaceViewHeight - surfaceViewWidth) / 2);
+        top = (list.get(0).top) + ((surfaceViewHeight - surfaceViewWidth) / 2);
+        right = surfaceViewHeight - list.get(0).right - ((surfaceViewHeight - surfaceViewWidth) / 2);
+        bottom = (list.get(0).bottom) + ((surfaceViewHeight - surfaceViewWidth) / 2);
 
         rectF = new RectF(left, top, right, bottom);
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -283,4 +291,20 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
             camera = null;
         }
     }
+
+    private Camera.Size ChooseBestCameraSize(List<Camera.Size> sizes, int surfaceWidth, int surfaceHeight) {
+        Camera.Size sizeBack = null;
+        float slope = (float) surfaceHeight / (float) surfaceWidth;
+        float deviation = 100;
+        for (Camera.Size size : sizes) {
+            float size_slope = (float) size.width / (float) size.height;
+            if (Math.abs(size_slope - slope) < deviation) {
+                deviation = Math.abs(size_slope - slope);
+                sizeBack = size;
+            }
+        }
+        return sizeBack;
+    }
+
+
 }
