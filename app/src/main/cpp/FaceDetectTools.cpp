@@ -66,7 +66,8 @@ struct DetectorAgregator {
 };
 
 extern "C"
-JNIEXPORT jlong JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeCreateObject
+JNIEXPORT jlong JNICALL
+Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeCreateObject
         (JNIEnv *jenv, jclass, jstring jFileName, jint faceSize) {
     const char *jnamestr = jenv->GetStringUTFChars(jFileName, NULL);
     string stdFileName(jnamestr);
@@ -87,7 +88,8 @@ JNIEXPORT jlong JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mo
     }
     catch (const cv::Exception &e) {
         LOGE("nativeCreateObject caught cv::Exception: %s", e.what());
-        jclass je = jenv->FindClass("cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
+        jclass je = jenv->FindClass(
+                "cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
         if (!je)
             je = jenv->FindClass("java/lang/Exception");
         jenv->ThrowNew(je, e.what());
@@ -105,7 +107,8 @@ JNIEXPORT jlong JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mo
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDestroyObject
+JNIEXPORT void JNICALL
+Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDestroyObject
         (JNIEnv *jenv, jclass, jlong thiz) {
     LOGD("nativeDestroyObject");
 
@@ -117,7 +120,8 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     }
     catch (const cv::Exception &e) {
         LOGE("nativeestroyObject caught cv::Exception: %s", e.what());
-        jclass je = jenv->FindClass("cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
+        jclass je = jenv->FindClass(
+                "cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
         if (!je)
             je = jenv->FindClass("java/lang/Exception");
         jenv->ThrowNew(je, e.what());
@@ -132,7 +136,8 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeStart
+JNIEXPORT void JNICALL
+Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeStart
         (JNIEnv *jenv, jclass, jlong thiz) {
     LOGD("nativeStart");
 
@@ -141,7 +146,8 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     }
     catch (const cv::Exception &e) {
         LOGE("nativeStart caught cv::Exception: %s", e.what());
-        jclass je = jenv->FindClass("cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
+        jclass je = jenv->FindClass(
+                "cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
         if (!je)
             je = jenv->FindClass("java/lang/Exception");
         jenv->ThrowNew(je, e.what());
@@ -155,7 +161,8 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeStop
+JNIEXPORT void JNICALL
+Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeStop
         (JNIEnv *jenv, jclass, jlong thiz) {
     LOGD("nativeStop");
 
@@ -164,7 +171,8 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     }
     catch (const cv::Exception &e) {
         LOGE("nativeStop caught cv::Exception: %s", e.what());
-        jclass je = jenv->FindClass("cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
+        jclass je = jenv->FindClass(
+                "cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
         if (!je)
             je = jenv->FindClass("java/lang/Exception");
         jenv->ThrowNew(je, e.what());
@@ -178,7 +186,8 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDetectRectsRotate90
+JNIEXPORT void JNICALL
+Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDetectRectsRotate90
         (JNIEnv *jenv, jclass, jlong thiz, jbyteArray image, jint w, jint h, jobject list_obj) {
 
     jclass RectCls = jenv->FindClass("android/graphics/Rect");
@@ -192,24 +201,26 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     cbuf = jenv->GetByteArrayElements(image, 0);
 
 
-    Mat dst;
+    Mat filp_horMat, dst;
     Mat imgData(h, w, CV_8UC1, (unsigned char *) cbuf);
-    Point center(imgData.cols/2,imgData.rows/2); //旋转中心
-    Mat rotMat = getRotationMatrix2D(center,90.0,1.0);
-    warpAffine(imgData,dst,rotMat,imgData.size());
+    Point center(imgData.cols / 2, imgData.rows / 2); //旋转中心
+    Mat rotMat = getRotationMatrix2D(center, 90.0, 1.0);
+    warpAffine(imgData, dst, rotMat, imgData.size());
+    flip(dst,filp_horMat,1);
 
-
-//    int size = dst.total() * dst.elemSize();
+//    int size = filp_horMat.total() * filp_horMat.elemSize();
 //    jbyte *bytes = new jbyte[size];  // you will have to delete[] that later
-//    memcpy(bytes,dst.data,size * sizeof(jbyte));
-//    jenv->SetByteArrayRegion(image,0,size,bytes);
+//    memcpy(bytes, filp_horMat.data, size * sizeof(jbyte));
+//    jenv->SetByteArrayRegion(image, 0, size, bytes);
+
+
     try {
         vector<Rect> RectFaces;
-        ((DetectorAgregator *) thiz)->tracker->process(dst);
+        ((DetectorAgregator *) thiz)->tracker->process(filp_horMat);
         ((DetectorAgregator *) thiz)->tracker->getObjects(RectFaces);
         jenv->ReleaseByteArrayElements(image, cbuf, 0);
         if (RectFaces.size() > 0) {
-            __android_log_print(ANDROID_LOG_DEBUG, "人脸数", "FaceSize : %d",RectFaces.size());
+            __android_log_print(ANDROID_LOG_DEBUG, "人脸数", "FaceSize : %d", RectFaces.size());
 
             for (int i = 0; i < RectFaces.size(); i++) {
                 jenv->CallVoidMethod(Rect_obj, Rect_set,
@@ -223,13 +234,13 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
         jenv->DeleteLocalRef(Rect_obj);
         jenv->DeleteLocalRef(RectCls);
         jenv->DeleteLocalRef(listFcls);
-
+        jenv->ReleaseByteArrayElements(image, cbuf, 0);
         LOGD("nativeDetectRList END");
-        //*((Mat*)faces) = Mat(RectFaces, true);
     }
     catch (const cv::Exception &e) {
         LOGE("nativeCreateObject caught cv::Exception: %s", e.what());
-        jclass je = jenv->FindClass("cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
+        jclass je = jenv->FindClass(
+                "cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
         if (!je)
             je = jenv->FindClass("java/lang/Exception");
         jenv->ThrowNew(je, e.what());
@@ -243,7 +254,8 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDetectRects
+JNIEXPORT void JNICALL
+Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDetectRects
         (JNIEnv *jenv, jclass, jlong thiz, jbyteArray image, jint w, jint h, jobject list_obj) {
 
     jclass RectCls = jenv->FindClass("android/graphics/Rect");
@@ -269,7 +281,7 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
         ((DetectorAgregator *) thiz)->tracker->getObjects(RectFaces);
         jenv->ReleaseByteArrayElements(image, cbuf, 0);
         if (RectFaces.size() > 0) {
-            __android_log_print(ANDROID_LOG_DEBUG, "人脸数", "FaceSize : %d",RectFaces.size());
+            __android_log_print(ANDROID_LOG_DEBUG, "人脸数", "FaceSize : %d", RectFaces.size());
 
             for (int i = 0; i < RectFaces.size(); i++) {
                 jenv->CallVoidMethod(Rect_obj, Rect_set,
@@ -289,7 +301,8 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
     }
     catch (const cv::Exception &e) {
         LOGE("nativeCreateObject caught cv::Exception: %s", e.what());
-        jclass je = jenv->FindClass("cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
+        jclass je = jenv->FindClass(
+                "cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
         if (!je)
             je = jenv->FindClass("java/lang/Exception");
         jenv->ThrowNew(je, e.what());
@@ -303,32 +316,30 @@ JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_mod
 }
 
 extern "C"
-JNIEXPORT void JNICALL Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeSetFaceSize
-        (JNIEnv * jenv, jclass, jlong thiz, jint faceSize)
-{
+JNIEXPORT void JNICALL
+Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeSetFaceSize
+        (JNIEnv *jenv, jclass, jlong thiz, jint faceSize) {
     LOGD("Java_org_opencv_samples_facedetect_DetectionBasedTracker_nativeSetFaceSize -- BEGIN");
 
-    try
-    {
-        if (faceSize > 0)
-        {
-            ((DetectorAgregator*)thiz)->mainDetector->setMinObjectSize(Size(faceSize, faceSize));
+    try {
+        if (faceSize > 0) {
+            ((DetectorAgregator *) thiz)->mainDetector->setMinObjectSize(Size(faceSize, faceSize));
             //((DetectorAgregator*)thiz)->trackingDetector->setMinObjectSize(Size(faceSize, faceSize));
         }
     }
-    catch(const cv::Exception& e)
-    {
+    catch (const cv::Exception &e) {
         LOGD("nativeStop caught cv::Exception: %s", e.what());
-        jclass je = jenv->FindClass("cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
-        if(!je)
+        jclass je = jenv->FindClass(
+                "cn/cbsd/aliveandfacedetect/Func/Func_Camera/mvp/module/CvException");
+        if (!je)
             je = jenv->FindClass("java/lang/Exception");
         jenv->ThrowNew(je, e.what());
     }
-    catch (...)
-    {
+    catch (...) {
         LOGD("nativeSetFaceSize caught unknown exception");
         jclass je = jenv->FindClass("java/lang/Exception");
-        jenv->ThrowNew(je, "Unknown exception in JNI code of DetectionBasedTracker.nativeSetFaceSize()");
+        jenv->ThrowNew(je,
+                       "Unknown exception in JNI code of DetectionBasedTracker.nativeSetFaceSize()");
     }
     LOGD("Java_org_opencv_samples_facedetect_DetectionBasedTracker_nativeSetFaceSize -- END");
 }

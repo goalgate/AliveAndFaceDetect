@@ -217,6 +217,7 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
             public void run() {
                 ArrayList<Rect> rectS = new ArrayList<Rect>();
                 tools.detectRectsRotate90(global_bytes, width, height, rectS);
+//                getOneShut();
                 showFrame(rectS);
             }
         });
@@ -248,25 +249,9 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
             mTextureView.unlockCanvasAndPost(canvas);
             return;
         }
-
-//        switch (FaceConfig.FaceDetectCamera) {
-//            case Camera.CameraInfo.CAMERA_FACING_BACK:
-//                left = surfaceViewHeight - (list.get(0).top);
-//                top = list.get(0).left * ((float) surfaceViewHeight / width);
-//                right = surfaceViewHeight - list.get(0).bottom;
-//                bottom = list.get(0).right * ((float) surfaceViewHeight / width);
-//                break;
-//            case Camera.CameraInfo.CAMERA_FACING_FRONT:
-//                left = surfaceViewHeight - (list.get(0).top);
-//                top = (surfaceViewWidth - list.get(0).left) * ((float) surfaceViewHeight / width);
-//                right = surfaceViewHeight - list.get(0).bottom;
-//                bottom = (surfaceViewWidth - list.get(0).right) * ((float) surfaceViewHeight / width);
-//                break;
-//        }
-//        left = ((surfaceViewWidth + width) / 2) - list.get(0).left;
-        left = surfaceViewHeight - list.get(0).left - ((surfaceViewHeight - surfaceViewWidth) / 2);
+        left = list.get(0).left - ((surfaceViewHeight - surfaceViewWidth) / 2);
         top = (list.get(0).top) + ((surfaceViewHeight - surfaceViewWidth) / 2);
-        right = surfaceViewHeight - list.get(0).right - ((surfaceViewHeight - surfaceViewWidth) / 2);
+        right = list.get(0).right - ((surfaceViewHeight - surfaceViewWidth) / 2);
         bottom = (list.get(0).bottom) + ((surfaceViewHeight - surfaceViewWidth) / 2);
 
         rectF = new RectF(left, top, right, bottom);

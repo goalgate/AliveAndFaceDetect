@@ -20,7 +20,7 @@ public class BaseActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
-        BarUtils.hideStatusBar(this);
+        BarUtils.setStatusBarVisibility(this,false);
 
     }
 
