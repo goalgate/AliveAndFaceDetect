@@ -201,22 +201,22 @@ Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nat
     cbuf = jenv->GetByteArrayElements(image, 0);
 
 
-    Mat filp_horMat, dst;
+    Mat Mat_filp, Mat_dst;
     Mat imgData(h, w, CV_8UC1, (unsigned char *) cbuf);
     Point center(imgData.cols / 2, imgData.rows / 2); //旋转中心
-    Mat rotMat = getRotationMatrix2D(center, 90.0, 1.0);
-    warpAffine(imgData, dst, rotMat, imgData.size());
-    flip(dst,filp_horMat,1);
+    Mat Mat_rot = getRotationMatrix2D(center, 90.0, 1.0);
+    warpAffine(imgData, Mat_dst, Mat_rot, imgData.size());
+    flip(Mat_dst, Mat_filp, 1);
 
-//    int size = filp_horMat.total() * filp_horMat.elemSize();
+//    int size = Mat_filp.total() * Mat_filp.elemSize();
 //    jbyte *bytes = new jbyte[size];  // you will have to delete[] that later
-//    memcpy(bytes, filp_horMat.data, size * sizeof(jbyte));
+//    memcpy(bytes, Mat_filp.data, size * sizeof(jbyte));
 //    jenv->SetByteArrayRegion(image, 0, size, bytes);
 
 
     try {
         vector<Rect> RectFaces;
-        ((DetectorAgregator *) thiz)->tracker->process(filp_horMat);
+        ((DetectorAgregator *) thiz)->tracker->process(Mat_filp);
         ((DetectorAgregator *) thiz)->tracker->getObjects(RectFaces);
         jenv->ReleaseByteArrayElements(image, cbuf, 0);
         if (RectFaces.size() > 0) {
@@ -343,3 +343,29 @@ Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nat
     }
     LOGD("Java_org_opencv_samples_facedetect_DetectionBasedTracker_nativeSetFaceSize -- END");
 }
+
+//extern "C"
+//JNIEXPORT void JNICALL
+//Java_cn_cbsd_aliveandfacedetect_Func_Func_1Camera_mvp_module_FaceDetectTools_nativeDrawKeypoints
+//        (JNIEnv *jenv, jclass, jlong thiz, jbyteArray image, jint w, jint h) {
+//    LOGD("Java_org_opencv_samples_facedetect_DetectionBasedTracker_nativeDrawKeypoints -- BEGIN");
+//
+//    jbyte *cbuf;
+//    cbuf = jenv->GetByteArrayElements(image, 0);
+//    Mat imgData(h, w, CV_8UC1, (unsigned char *) cbuf);
+//
+//    Ptr<xfeatures2d::SIFT> sift = xfeatures2d::SIFT::create();
+//    vector<KeyPoint> keyPoint;
+//    sift->detect(imgData, keyPoint);
+//
+//    Mat keyPointImage;
+//    drawKeypoints(imgData, keyPoint, keyPointImage, Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+//
+//    int size = keyPointImage.total() * keyPointImage.elemSize();
+//    jbyte *bytes = new jbyte[size];  // you will have to delete[] that later
+//    memcpy(bytes, keyPointImage.data, size * sizeof(jbyte));
+//    jenv->SetByteArrayRegion(image, 0, size, bytes);
+//
+//    LOGD("Java_org_opencv_samples_facedetect_DetectionBasedTracker_nativeDrawKeypoints -- END");
+//}
+

@@ -2,15 +2,14 @@ package cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.hardware.Camera;
 import android.util.Log;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
 
-import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.FaceConfig;
+import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.Custom_MachinePhotoModuleImpl;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.FaceDetectTools;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.IPhotoModule;
+import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.PhonePhotoModuleImpl;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.view.IPhotoView;
 
 
@@ -38,8 +37,17 @@ public class PhotoPresenter {
         this.view = view;
     }
 
-    IPhotoModule photoModule = FaceConfig.camera_module();
+    public static PhotoPresenter.EquipmentType equipmentType = PhotoPresenter.EquipmentType.Custom_machine;
 
+    IPhotoModule photoModule = camera_module();
+
+    public static IPhotoModule camera_module() {
+        if(equipmentType.equals(PhotoPresenter.EquipmentType.Custom_machine)){
+            return new Custom_MachinePhotoModuleImpl();
+        }else{
+            return new PhonePhotoModuleImpl();
+        }
+    }
 
     public void Init(SurfaceView ShowView, SurfaceView FaceDetectView, TextureView textureView) {
         try {

@@ -9,7 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
-public class TESTActivity extends Activity {
+public class SensorActivity extends Activity {
     private TextView tv;
     private SensorManager manager;
     private MySensorEventListener listener;

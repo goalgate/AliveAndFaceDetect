@@ -16,7 +16,6 @@ import com.blankj.utilcode.util.BrightnessUtils;
 
 import java.util.List;
 
-import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.FaceConfig;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter.PhotoPresenter;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.view.IPhotoView;
 
@@ -50,11 +49,7 @@ public class MainActivity extends BaseActivity implements IPhotoView {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         BarUtils.setStatusBarVisibility(this,false);
-        if(FaceConfig.equipmentType.equals(PhotoPresenter.EquipmentType.phone)){
-            setContentView(R.layout.activity_phone);
-        }else{
-            setContentView(R.layout.activity_custom_machine);
-        }
+        setContentView(R.layout.activity_main);
         FaceDetect_sView = (SurfaceView) findViewById(R.id.FaceDetect_sView);
         Showing_sView = (SurfaceView) findViewById(R.id.Showing_sView);
         textureView = findViewById(R.id.texture_view);

@@ -39,6 +39,8 @@ import io.reactivex.schedulers.Schedulers;
 
 public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
 
+    public static int FaceDetectCamera = Camera.CameraInfo.CAMERA_FACING_FRONT;
+
     Camera FaceDetect_cam;
 
     SurfaceView FaceDetect_sView;
@@ -71,24 +73,22 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
                 releaseCameraAndPreview(FaceDetect_cam);
-                FaceDetect_cam = Camera.open(FaceConfig.FaceDetectCamera);
+                FaceDetect_cam = Camera.open(FaceDetectCamera);
                 FaceDetect_cam.setDisplayOrientation(90);
+                Log.e("surfaceViewWidth", String.valueOf(surfaceViewWidth = FaceDetectView.getWidth()));
+                Log.e("surfaceViewHeight", String.valueOf(surfaceViewHeight = FaceDetectView.getHeight()));
                 Camera.Parameters parameters = FaceDetect_cam.getParameters();
-                List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
-                Camera.Size settingSize = ChooseBestCameraSize(sizes, FaceDetectView.getWidth(), FaceDetectView.getHeight());
-                parameters.setPreviewSize(settingSize.width, settingSize.height);
+                Camera.Size settingSize = ChooseBestCameraSize(parameters.getSupportedPreviewSizes(), surfaceViewWidth, surfaceViewHeight);
+                parameters.setPreviewSize(width = settingSize.width, height = settingSize.height);
                 parameters.setPictureFormat(ImageFormat.JPEG);
                 parameters.set("jpeg-quality", 100);
                 FaceDetect_cam.setParameters(parameters);
-                Camera.Size sizeResult = parameters.getPreviewSize();
-                Log.e("width", String.valueOf(width = sizeResult.width));
-                Log.e("height", String.valueOf(height = sizeResult.height));
-                Log.e("surfaceViewWidth", String.valueOf(surfaceViewWidth = FaceDetectView.getWidth()));
-                Log.e("surfaceViewHeight", String.valueOf(surfaceViewHeight = FaceDetectView.getHeight()));
+                Log.e("width", String.valueOf(width));
+                Log.e("height", String.valueOf(height));
                 FaceDetect_cam.setPreviewCallbackWithBuffer(PhonePhotoModuleImpl.this);
                 FaceDetect_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
                 FaceDetect_cam.setPreviewCallback(PhonePhotoModuleImpl.this);
-                setDisplay(surfaceHolder, FaceConfig.FaceDetectCamera);
+                setDisplay(surfaceHolder, FaceDetectCamera);
             }
 
             @Override
@@ -106,7 +106,7 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 
     @Override
     public void setDisplay() {
-        setDisplay(FaceDetect_sView.getHolder(), FaceConfig.FaceDetectCamera);
+        setDisplay(FaceDetect_sView.getHolder(), FaceDetectCamera);
     }
 
     public void setDisplay(SurfaceHolder surfaceHolder, int camera_id) {

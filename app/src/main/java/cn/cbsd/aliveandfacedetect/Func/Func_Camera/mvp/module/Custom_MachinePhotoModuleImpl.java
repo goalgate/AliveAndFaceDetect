@@ -16,12 +16,15 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
+
 import cn.cbsd.aliveandfacedetect.R;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
@@ -32,6 +35,12 @@ import io.reactivex.schedulers.Schedulers;
 
 
 public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
+
+    public static int FaceDetectCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
+
+    public static int ShowingCamera = Camera.CameraInfo.CAMERA_FACING_FRONT;
+
+    public static boolean isBinocular = true;
 
     Camera FaceDetect_cam;
 
@@ -61,11 +70,11 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
 
     @Override
     public void setDisplay() {
-        if(FaceConfig.isBinocular){
-            setDisplay(FaceDetect_sView.getHolder(),FaceConfig.FaceDetectCamera);
-            setDisplay(Showing_sView.getHolder(),FaceConfig.ShowingCamera);
-        }else {
-            setDisplay(FaceDetect_sView.getHolder(),FaceConfig.FaceDetectCamera);
+        if (isBinocular) {
+            setDisplay(FaceDetect_sView.getHolder(), FaceDetectCamera);
+            setDisplay(Showing_sView.getHolder(), ShowingCamera);
+        } else {
+            setDisplay(FaceDetect_sView.getHolder(), FaceDetectCamera);
         }
 
 
@@ -73,12 +82,12 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
 
     public void setDisplay(SurfaceHolder sHolder, int camera_id) {
         try {
-            if(camera_id == FaceConfig.FaceDetectCamera){
+            if (camera_id == FaceDetectCamera) {
                 if (FaceDetect_cam != null) {
                     FaceDetect_cam.setPreviewDisplay(sHolder);
                     FaceDetect_cam.startPreview();
                 }
-            }else if (camera_id == FaceConfig.ShowingCamera){
+            } else if (camera_id == ShowingCamera) {
                 if (Showing_cam != null) {
                     Showing_cam.setPreviewDisplay(sHolder);
                     Showing_cam.startPreview();
@@ -91,22 +100,23 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
     }
 
     @Override
-    public void Init(SurfaceView ShowView, SurfaceView FaceDetectView, TextureView textureView, IOnSetListener listener) {
+    public void Init(final SurfaceView ShowView, final SurfaceView FaceDetectView, TextureView textureView, IOnSetListener listener) {
         this.callback = listener;
         this.mTextureView = textureView;
         tools.start();
-        if(FaceConfig.isBinocular){
+        if (isBinocular) {
             this.Showing_sView = ShowView;
             this.FaceDetect_sView = FaceDetectView;
             Showing_sView.getHolder().addCallback(new SurfaceHolder.Callback() {
                 @Override
                 public void surfaceCreated(SurfaceHolder surfaceHolder) {
                     releaseCameraAndPreview(Showing_cam);
-                    Showing_cam = Camera.open(FaceConfig.ShowingCamera);
+                    Showing_cam = Camera.open(ShowingCamera);
                     Camera.Parameters parameters = Showing_cam.getParameters();
+                    Camera.Size settingSize = ChooseBestCameraSize(parameters.getSupportedPreviewSizes(), surfaceViewWidth = ShowView.getWidth(), surfaceViewHeight = ShowView.getHeight());
+                    parameters.setPreviewSize(settingSize.width,settingSize.height);
                     parameters.setPictureFormat(ImageFormat.JPEG);
                     parameters.set("jpeg-quality", 100);
-                    parameters.setPreviewSize(FaceConfig.width,FaceConfig.height);
                     Showing_cam.setParameters(parameters);
                     Showing_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
                     Showing_cam.setPreviewCallback(new Camera.PreviewCallback() {
@@ -115,7 +125,7 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
                             global_bytes = bytes;
                         }
                     });
-                    setDisplay(surfaceHolder,FaceConfig.ShowingCamera);
+                    setDisplay(surfaceHolder, ShowingCamera);
                 }
 
                 @Override
@@ -133,22 +143,17 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
                 @Override
                 public void surfaceCreated(SurfaceHolder surfaceHolder) {
                     releaseCameraAndPreview(FaceDetect_cam);
-                    FaceDetect_cam = Camera.open(FaceConfig.FaceDetectCamera);
-//                    safeCameraOpen(FaceDetect_cam, FaceConfig.FaceDetectCamera);
+                    FaceDetect_cam = Camera.open(FaceDetectCamera);
                     Camera.Parameters parameters = FaceDetect_cam.getParameters();
-                    Camera.Size size = FaceDetect_cam.getParameters().getPreviewSize(); //获取预览大小
-                    parameters.setPreviewSize(640,480);
-                    Log.e("width", String.valueOf(width = size.width));
-                    Log.e("height", String.valueOf(height = size.height));
-                    Log.e("surface_width", String.valueOf(surfaceViewWidth = FaceDetect_sView.getWidth()));
-                    Log.e("surface_height", String.valueOf(surfaceViewHeight = FaceDetect_sView.getHeight()));
+                    Camera.Size settingSize = ChooseBestCameraSize(parameters.getSupportedPreviewSizes(), FaceDetect_sView.getWidth(), FaceDetect_sView.getHeight());
+                    parameters.setPreviewSize(width = settingSize.width, height = settingSize.height);
                     parameters.setPictureFormat(ImageFormat.JPEG);
                     parameters.set("jpeg-quality", 100);
                     FaceDetect_cam.setParameters(parameters);
                     FaceDetect_cam.setPreviewCallbackWithBuffer(Custom_MachinePhotoModuleImpl.this);
                     FaceDetect_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
                     FaceDetect_cam.setPreviewCallback(Custom_MachinePhotoModuleImpl.this);
-                    setDisplay(surfaceHolder, FaceConfig.FaceDetectCamera);
+                    setDisplay(surfaceHolder, FaceDetectCamera);
                 }
 
                 @Override
@@ -163,27 +168,23 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
                 }
             });
 
-        }else{
+        } else {
             this.FaceDetect_sView = FaceDetectView;
             FaceDetect_sView.getHolder().addCallback(new SurfaceHolder.Callback() {
                 @Override
                 public void surfaceCreated(SurfaceHolder surfaceHolder) {
                     releaseCameraAndPreview(FaceDetect_cam);
-                    FaceDetect_cam = Camera.open(FaceConfig.FaceDetectCamera);
+                    FaceDetect_cam = Camera.open(FaceDetectCamera);
                     Camera.Parameters parameters = FaceDetect_cam.getParameters();
-                    Camera.Size size = FaceDetect_cam.getParameters().getPreviewSize(); //获取预览大小
-                    parameters.setPreviewSize(640,480);
-                    Log.e("width", String.valueOf(width = size.width));
-                    Log.e("height", String.valueOf(height = size.height));
-                    Log.e("surface_width", String.valueOf(surfaceViewWidth = FaceDetect_sView.getWidth()));
-                    Log.e("surface_height", String.valueOf(surfaceViewHeight = FaceDetect_sView.getHeight()));
+                    Camera.Size settingSize = ChooseBestCameraSize(parameters.getSupportedPreviewSizes(), FaceDetect_sView.getWidth(), FaceDetect_sView.getHeight());
+                    parameters.setPreviewSize(width = settingSize.width, height = settingSize.height);
                     parameters.setPictureFormat(ImageFormat.JPEG);
                     parameters.set("jpeg-quality", 100);
                     FaceDetect_cam.setParameters(parameters);
                     FaceDetect_cam.setPreviewCallbackWithBuffer(Custom_MachinePhotoModuleImpl.this);
                     FaceDetect_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
                     FaceDetect_cam.setPreviewCallback(Custom_MachinePhotoModuleImpl.this);
-                    setDisplay(surfaceHolder, FaceConfig.FaceDetectCamera);
+                    setDisplay(surfaceHolder, FaceDetectCamera);
                 }
 
                 @Override
@@ -194,6 +195,7 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
                 @Override
                 public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
                     releaseCamera(FaceDetect_cam);
+
                 }
             });
 
@@ -325,7 +327,7 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
             mTextureView.unlockCanvasAndPost(canvas);
             return;
         }
-        left =  surfaceViewWidth - list.get(0).left * ((float) surfaceViewWidth / width);
+        left = surfaceViewWidth - list.get(0).left * ((float) surfaceViewWidth / width);
         top = list.get(0).top * ((float) surfaceViewHeight / height);
         right = surfaceViewWidth - list.get(0).right * ((float) surfaceViewWidth / width);
         bottom = list.get(0).bottom * ((float) surfaceViewHeight / height);
@@ -362,6 +364,20 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
             Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
         }
         return null;
+    }
+
+    private Camera.Size ChooseBestCameraSize(List<Camera.Size> sizes, int surfaceWidth, int surfaceHeight) {
+        Camera.Size sizeBack = null;
+        float slope = (float) surfaceHeight / (float) surfaceWidth;
+        float deviation = 100;
+        for (Camera.Size size : sizes) {
+            float size_slope = (float) size.width / (float) size.height;
+            if (Math.abs(size_slope - slope) < deviation) {
+                deviation = Math.abs(size_slope - slope);
+                sizeBack = size;
+            }
+        }
+        return sizeBack;
     }
 }
 
