@@ -6,10 +6,13 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.view.TextureView;
 
+import cn.cbsd.FaceUitls.FaceDetectTools;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.Custom_MachinePhotoModuleImpl;
-import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.FaceDetectTools;
+import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.Custom_MachinePhotoModuleImpl2;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.IPhotoModule;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.PhonePhotoModuleImpl;
+import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.PhonePhotoModuleImpl2;
+import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module.PhonePhotoModuleImpl3;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.view.IPhotoView;
 
 
@@ -32,20 +35,19 @@ public class PhotoPresenter {
         phone, Custom_machine
     }
 
-
     public void PhotoPresenterSetView(IPhotoView view) {
         this.view = view;
     }
 
-    public static PhotoPresenter.EquipmentType equipmentType = PhotoPresenter.EquipmentType.Custom_machine;
+    public static PhotoPresenter.EquipmentType equipmentType = EquipmentType.phone;
 
     IPhotoModule photoModule = camera_module();
 
     public static IPhotoModule camera_module() {
-        if(equipmentType.equals(PhotoPresenter.EquipmentType.Custom_machine)){
-            return new Custom_MachinePhotoModuleImpl();
-        }else{
-            return new PhonePhotoModuleImpl();
+        if (equipmentType.equals(PhotoPresenter.EquipmentType.Custom_machine)) {
+            return new Custom_MachinePhotoModuleImpl2();
+        } else {
+            return new PhonePhotoModuleImpl3();
         }
     }
 
@@ -58,7 +60,9 @@ public class PhotoPresenter {
             photoModule.Init(ShowView, FaceDetectView, textureView, new IPhotoModule.IOnSetListener() {
                 @Override
                 public void onBtnText(String msg) {
-                    view.onCaremaText(msg);
+                    if (view != null) {
+                        view.onCaremaText(msg);
+                    }
                 }
 
                 @Override
@@ -103,14 +107,6 @@ public class PhotoPresenter {
             photoModule.getOneShut();
         } catch (NullPointerException e) {
             Log.e("getOneShut", e.toString());
-        }
-    }
-
-    public void setMinFaceSize(int size) {
-        try {
-            photoModule.setMinFaceSize(size);
-        } catch (NullPointerException e) {
-            Log.e("setMinFaceSize", e.toString());
         }
     }
 

@@ -2,12 +2,10 @@ package cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.module;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.hardware.Camera;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
 
-import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter.PhotoPresenter;
+import cn.cbsd.FaceUitls.FaceDetectTools;
 
 
 /**
@@ -28,8 +26,6 @@ public interface IPhotoModule {
     void onActivityDestroy();
 
     FaceDetectTools OpenCVPrepare(Context context);
-
-    void setMinFaceSize(int size);
 
     interface IOnSetListener {
         void onBtnText(String msg);//按完按钮后的回调接口

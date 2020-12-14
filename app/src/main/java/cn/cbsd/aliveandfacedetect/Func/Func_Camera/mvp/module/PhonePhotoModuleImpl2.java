@@ -12,14 +12,10 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
-import android.text.Layout;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
-import android.view.ViewGroup;
-
-import com.blankj.utilcode.util.ScreenUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,7 +34,7 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
-public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
+public class PhonePhotoModuleImpl2 implements IPhotoModule, Camera.PreviewCallback {
 
     public static int FaceDetectCamera = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
@@ -62,7 +58,7 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 
     int surfaceViewHeight;
 
-    private static final String TAG = PhonePhotoModuleImpl.class.getSimpleName();
+    private static final String TAG = PhonePhotoModuleImpl2.class.getSimpleName();
 
 
     @Override
@@ -86,9 +82,9 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
                 FaceDetect_cam.setParameters(parameters);
                 Log.e("width", String.valueOf(width));
                 Log.e("height", String.valueOf(height));
-                FaceDetect_cam.setPreviewCallbackWithBuffer(PhonePhotoModuleImpl.this);
+                FaceDetect_cam.setPreviewCallbackWithBuffer(PhonePhotoModuleImpl2.this);
                 FaceDetect_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
-                FaceDetect_cam.setPreviewCallback(PhonePhotoModuleImpl.this);
+                FaceDetect_cam.setPreviewCallback(PhonePhotoModuleImpl2.this);
                 setDisplay(surfaceHolder, FaceDetectCamera);
             }
 
@@ -204,19 +200,68 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
         return null;
     }
 
+
+    long lastRecordTime = System.currentTimeMillis();
+
+    //上次记录的索引
+    int darkIndex = 0;
+    //一个历史记录的数组，255是代表亮度最大值
+    long[] darkList = new long[]{255, 255, 255, 255};
+    //扫描间隔
+    int waitScanTime = 300;
+
+    //亮度低的阀值
+    int darkValue = 60;
+
+
     @Override
-    public void onPreviewFrame(byte[] bytes, Camera camera) {
-        camera.addCallbackBuffer(bytes);
-        global_bytes = bytes;
+    public void onPreviewFrame(byte[] data, Camera camera) {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastRecordTime < waitScanTime) {
+            return;
+        }
+        lastRecordTime = currentTime;
+        //像素点的总亮度
+        long pixelLightCount = 0L;
+        //像素点的总数
+        long pixeCount = width * height;
+        //采集步长，因为没有必要每个像素点都采集，可以跨一段采集一个，减少计算负担，必须大于等于1。
+        int step = 10;
+        //data.length - allCount * 1.5f的目的是判断图像格式是不是YUV420格式，只有是这种格式才相等
+        //因为int整形与float浮点直接比较会出问题，所以这么比
+        if (Math.abs(data.length - pixeCount * 1.5f) < 0.00001f) {
+            for (int i = 0; i < pixeCount; i += step) {
+                //如果直接加是不行的，因为data[i]记录的是色值并不是数值，byte的范围是+127到—128，
+                // 而亮度FFFFFF是11111111是-127，所以这里需要先转为无符号unsigned long参考Byte.toUnsignedLong()
+                pixelLightCount += ((long) data[i]) & 0xffL;
+            }
+            //平均亮度
+            long cameraLight = pixelLightCount / (pixeCount / step);
+            //更新历史记录
+            int lightSize = darkList.length;
+            darkList[darkIndex = darkIndex % lightSize] = cameraLight;
+            darkIndex++;
+            boolean isDarkEnv = true;
+            //判断在时间范围waitScanTime * lightSize内是不是亮度过暗
+            for (int i = 0; i < lightSize; i++) {
+                if (darkList[i] > darkValue) {
+                    isDarkEnv = false;
+                }
+            }
+            callback.onBtnText("摄像头环境亮度为 ： " + cameraLight);
+        }
+        camera.addCallbackBuffer(data);
+        global_bytes = data;
         CalTaskThreadExecutor.getInstance().submit(new Runnable() {
             @Override
             public void run() {
                 ArrayList<Rect> rectS = new ArrayList<Rect>();
-                tools.detectRects(global_bytes, width, height, rectS,90,true);
-//                getOneShut();
+                tools.detectRects(global_bytes, width, height, rectS, 90, true);
+                Log.e("rectS", String.valueOf(rectS.size()));
                 showFrame(rectS);
             }
         });
+
     }
 
     private RectF rectF = new RectF();

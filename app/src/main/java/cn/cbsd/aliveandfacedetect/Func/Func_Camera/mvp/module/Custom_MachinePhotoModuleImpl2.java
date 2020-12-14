@@ -12,6 +12,8 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -26,6 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.cbsd.FaceUitls.FaceDetectTools;
+import cn.cbsd.FaceUitls.FaceVerifyFlow.ByteToBMPUtils;
+import cn.cbsd.FaceUitls.FaceVerifyFlow.FaceVerifyContext;
+import cn.cbsd.FaceUitls.FaceVerifyFlow.MediaHelper;
+import cn.cbsd.aliveandfacedetect.AppInit;
+
 import cn.cbsd.aliveandfacedetect.R;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
@@ -35,7 +42,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 
-public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
+public class Custom_MachinePhotoModuleImpl2 implements IPhotoModule, Camera.PreviewCallback {
 
     public static int FaceDetectCamera = Camera.CameraInfo.CAMERA_FACING_BACK;
 
@@ -57,8 +64,6 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
 
     byte[] global_bytes;
 
-    FaceDetectTools tools;
-
     int width;
 
     int height;
@@ -67,7 +72,11 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
 
     int surfaceViewHeight;
 
-    private static final String TAG = Custom_MachinePhotoModuleImpl.class.getSimpleName();
+    private static final String TAG = Custom_MachinePhotoModuleImpl2.class.getSimpleName();
+
+    FaceVerifyContext faceContext;
+
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
     public void setDisplay() {
@@ -104,7 +113,19 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
     public void Init(final SurfaceView ShowView, final SurfaceView FaceDetectView, TextureView textureView, IOnSetListener listener) {
         this.callback = listener;
         this.mTextureView = textureView;
-        tools.start();
+        ByteToBMPUtils.Init(AppInit.getContext());
+        faceContext = new FaceVerifyContext(new FaceVerifyContext.ConvertEvent() {
+            @Override
+            public void Message(String Text) {
+                callback.onBtnText(Text);
+            }
+
+            @Override
+            public void Voice(MediaHelper.VoiceTemplate temp) {
+                MediaHelper.play(temp);
+            }
+        });
+        faceContext.prepare(faceContext);
         if (isBinocular) {
             this.Showing_sView = ShowView;
             this.FaceDetect_sView = FaceDetectView;
@@ -151,9 +172,9 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
                     parameters.setPictureFormat(ImageFormat.JPEG);
                     parameters.set("jpeg-quality", 100);
                     FaceDetect_cam.setParameters(parameters);
-                    FaceDetect_cam.setPreviewCallbackWithBuffer(Custom_MachinePhotoModuleImpl.this);
+                    FaceDetect_cam.setPreviewCallbackWithBuffer(Custom_MachinePhotoModuleImpl2.this);
                     FaceDetect_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
-                    FaceDetect_cam.setPreviewCallback(Custom_MachinePhotoModuleImpl.this);
+                    FaceDetect_cam.setPreviewCallback(Custom_MachinePhotoModuleImpl2.this);
                     setDisplay(surfaceHolder, FaceDetectCamera);
                 }
 
@@ -182,9 +203,9 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
                     parameters.setPictureFormat(ImageFormat.JPEG);
                     parameters.set("jpeg-quality", 100);
                     FaceDetect_cam.setParameters(parameters);
-                    FaceDetect_cam.setPreviewCallbackWithBuffer(Custom_MachinePhotoModuleImpl.this);
+                    FaceDetect_cam.setPreviewCallbackWithBuffer(Custom_MachinePhotoModuleImpl2.this);
                     FaceDetect_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
-                    FaceDetect_cam.setPreviewCallback(Custom_MachinePhotoModuleImpl.this);
+                    FaceDetect_cam.setPreviewCallback(Custom_MachinePhotoModuleImpl2.this);
                     setDisplay(surfaceHolder, FaceDetectCamera);
                 }
 
@@ -221,8 +242,8 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
         FaceDetect_sView = null;
         Showing_sView = null;
         mTextureView = null;
-        tools.stop();
-        tools.release();
+        faceContext.release();
+
     }
 
     @Override
@@ -289,7 +310,8 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
             @Override
             public void run() {
                 ArrayList<Rect> rectS = new ArrayList<Rect>();
-                tools.detectRects(data, width, height, rectS, 0, true);
+                faceContext.dealData(faceContext, data, width, height, rectS);
+                callback.onGetPhoto(ByteToBMPUtils.byteToBitmap(data, width, height));
                 showFrame(rectS);
             }
         });
@@ -310,54 +332,38 @@ public class Custom_MachinePhotoModuleImpl implements IPhotoModule, Camera.Previ
     float right;
     float bottom;
 
-    private void showFrame(ArrayList<Rect> list) {
-        Canvas canvas = mTextureView.lockCanvas();
-        if (canvas == null) {
-            mTextureView.unlockCanvasAndPost(canvas);
-            return;
-        }
-        if (list == null || list.size() == 0) {
-            // 清空canvas
-            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-            mTextureView.unlockCanvasAndPost(canvas);
-            return;
-        }
-        left = surfaceViewWidth - list.get(0).left * ((float) surfaceViewWidth / width);
-        top = surfaceViewHeight - list.get(0).top * ((float) surfaceViewHeight / height);
-        right = surfaceViewWidth - list.get(0).right * ((float) surfaceViewWidth / width);
-        bottom = surfaceViewHeight - list.get(0).bottom * ((float) surfaceViewHeight / height);
+    private void showFrame(final ArrayList<Rect> list) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Canvas canvas = mTextureView.lockCanvas();
+                if (canvas == null) {
+                    mTextureView.unlockCanvasAndPost(canvas);
+                    return;
+                }
+                if (list == null || list.size() == 0) {
+                    // 清空canvas
+                    canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                    mTextureView.unlockCanvasAndPost(canvas);
+                    return;
+                }
+                left = surfaceViewWidth - list.get(0).left * ((float) surfaceViewWidth / width);
+                top = list.get(0).top * ((float) surfaceViewHeight / height);
+                right = surfaceViewWidth - list.get(0).right * ((float) surfaceViewWidth / width);
+                bottom = list.get(0).bottom * ((float) surfaceViewHeight / height);
 
-
-        rectF = new RectF(left, top, right, bottom);
-        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-        canvas.drawRect(rectF, paint);
-        mTextureView.unlockCanvasAndPost(canvas);
+                rectF = new RectF(left, top, right, bottom);
+                canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                canvas.drawRect(rectF, paint);
+                mTextureView.unlockCanvasAndPost(canvas);
+            }
+        });
 
     }
 
 
     @Override
     public FaceDetectTools OpenCVPrepare(Context context) {
-        try {
-            // load cascade file from application resources
-            InputStream is = context.getResources().openRawResource(R.raw.haarcascade_frontalface_default);
-            File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
-            File mCascadeFile = new File(cascadeDir, "haarcascade_frontalface_default.xml");
-            FileOutputStream os = new FileOutputStream(mCascadeFile);
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1) {
-                os.write(buffer, 0, bytesRead);
-            }
-            is.close();
-            os.close();
-            tools = new FaceDetectTools(mCascadeFile.getAbsolutePath(), 0);
-            cascadeDir.delete();
-            return tools;
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
-        }
         return null;
     }
 

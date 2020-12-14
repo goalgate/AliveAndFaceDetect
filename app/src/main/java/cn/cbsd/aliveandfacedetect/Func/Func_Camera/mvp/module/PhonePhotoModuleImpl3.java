@@ -6,20 +6,17 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
-import android.text.Layout;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
-import android.view.ViewGroup;
-
-import com.blankj.utilcode.util.ScreenUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -30,7 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.cbsd.FaceUitls.FaceDetectTools;
-import cn.cbsd.aliveandfacedetect.R;
+import cn.cbsd.FaceUitls.FaceVerifyFlow.ByteToBMPUtils;
+import cn.cbsd.FaceUitls.FaceVerifyFlow.FaceVerifyContext;
+import cn.cbsd.FaceUitls.FaceVerifyFlow.MediaHelper;
+import cn.cbsd.aliveandfacedetect.AppInit;
+
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -38,7 +39,7 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
-public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallback {
+public class PhonePhotoModuleImpl3 implements IPhotoModule, Camera.PreviewCallback {
 
     public static int FaceDetectCamera = Camera.CameraInfo.CAMERA_FACING_FRONT;
 
@@ -52,8 +53,6 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 
     byte[] global_bytes;
 
-    FaceDetectTools tools;
-
     int width;
 
     int height;
@@ -62,14 +61,28 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 
     int surfaceViewHeight;
 
-    private static final String TAG = PhonePhotoModuleImpl.class.getSimpleName();
+    private static final String TAG = PhonePhotoModuleImpl3.class.getSimpleName();
 
+    FaceVerifyContext faceContext;
 
     @Override
     public void Init(SurfaceView ShowView, final SurfaceView FaceDetectView, TextureView textureView, IOnSetListener listener) {
         this.FaceDetect_sView = FaceDetectView;
         this.callback = listener;
         this.mTextureView = textureView;
+        ByteToBMPUtils.Init(AppInit.getContext());
+        faceContext = new FaceVerifyContext(new FaceVerifyContext.ConvertEvent() {
+            @Override
+            public void Message(String Text) {
+                callback.onBtnText(Text);
+            }
+
+            @Override
+            public void Voice(MediaHelper.VoiceTemplate temp) {
+                MediaHelper.play(temp);
+            }
+        });
+        faceContext.prepare(faceContext);
         FaceDetect_sView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -86,9 +99,9 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
                 FaceDetect_cam.setParameters(parameters);
                 Log.e("width", String.valueOf(width));
                 Log.e("height", String.valueOf(height));
-                FaceDetect_cam.setPreviewCallbackWithBuffer(PhonePhotoModuleImpl.this);
+                FaceDetect_cam.setPreviewCallbackWithBuffer(PhonePhotoModuleImpl3.this);
                 FaceDetect_cam.addCallbackBuffer(new byte[width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8]);
-                FaceDetect_cam.setPreviewCallback(PhonePhotoModuleImpl.this);
+                FaceDetect_cam.setPreviewCallback(PhonePhotoModuleImpl3.this);
                 setDisplay(surfaceHolder, FaceDetectCamera);
             }
 
@@ -172,52 +185,33 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
 
     @Override
     public void onActivityDestroy() {
-
         FaceDetect_sView = null;
         mTextureView = null;
-        tools.stop();
-        tools.release();
+        faceContext.release();
     }
 
     @Override
     public FaceDetectTools OpenCVPrepare(Context context) {
-        try {
-            // load cascade file from application resources
-            InputStream is = context.getResources().openRawResource(R.raw.haarcascade_frontalface_default);
-            File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
-            File mCascadeFile = new File(cascadeDir, "haarcascade_frontalface_default.xml");
-            FileOutputStream os = new FileOutputStream(mCascadeFile);
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1) {
-                os.write(buffer, 0, bytesRead);
-            }
-            is.close();
-            os.close();
-            tools = new FaceDetectTools(mCascadeFile.getAbsolutePath(), 0);
-            cascadeDir.delete();
-            return tools;
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
-        }
         return null;
     }
 
     @Override
-    public void onPreviewFrame(byte[] bytes, Camera camera) {
-        camera.addCallbackBuffer(bytes);
-        global_bytes = bytes;
+    public void onPreviewFrame(final byte[] data, Camera camera) {
+        camera.addCallbackBuffer(data);
+        global_bytes = data;
         CalTaskThreadExecutor.getInstance().submit(new Runnable() {
             @Override
             public void run() {
                 ArrayList<Rect> rectS = new ArrayList<Rect>();
-                tools.detectRects(global_bytes, width, height, rectS,90,true);
-//                getOneShut();
+                faceContext.dealData(faceContext, data, width, height, rectS);
+//                callback.onGetPhoto(ByteToBMPUtils.byteToBitmap(data, width, height));
                 showFrame(rectS);
             }
         });
+
     }
+
+
 
     private RectF rectF = new RectF();
     private Paint paint = new Paint();
@@ -245,11 +239,11 @@ public class PhonePhotoModuleImpl implements IPhotoModule, Camera.PreviewCallbac
             mTextureView.unlockCanvasAndPost(canvas);
             return;
         }
-        left = list.get(0).left - ((surfaceViewHeight - surfaceViewWidth) / 2);
-        top = (list.get(0).top) + ((surfaceViewHeight - surfaceViewWidth) / 2);
-        right = list.get(0).right - ((surfaceViewHeight - surfaceViewWidth) / 2);
-        bottom = (list.get(0).bottom) + ((surfaceViewHeight - surfaceViewWidth) / 2);
 
+        left = list.get(0).left ;
+        top = list.get(0).top ;
+        right = list.get(0).right;
+        bottom = list.get(0).bottom;
         rectF = new RectF(left, top, right, bottom);
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         canvas.drawRect(rectF, paint);

@@ -1,54 +1,53 @@
 package cn.cbsd.aliveandfacedetect;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.view.SurfaceView;
 import android.view.TextureView;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.blankj.utilcode.util.BarUtils;
 import com.blankj.utilcode.util.BrightnessUtils;
+import com.blankj.utilcode.util.ScreenUtils;
 
 import java.util.List;
 
-import cn.cbsd.FaceUitls.FaceVerifyFlow.MediaHelper;
+import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.UI.FaceRoundView;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter.PhotoPresenter;
 import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.view.IPhotoView;
 
-public class MainActivity extends BaseActivity implements IPhotoView {
+public class MainActivity2 extends BaseActivity implements IPhotoView {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String TAG = MainActivity2.class.getSimpleName();
 
-    private SensorManager sensorManager;
+    private int mScreenW;
+    private int mScreenH;
 
-    int OriginBrightness ;
+    private int OriginBrightness ;
 
-    boolean isAutoBrightnessEnabled;
+    private boolean isAutoBrightnessEnabled;
 
-    PhotoPresenter pp = PhotoPresenter.getInstance();
+    private PhotoPresenter pp = PhotoPresenter.getInstance();
 
-    SurfaceView FaceDetect_sView;
+    private SurfaceView FaceDetect_sView;
 
-    SurfaceView Showing_sView;
+    private SurfaceView Showing_sView;
 
-    TextureView textureView;
+    private TextureView textureView;
 
-    ImageView imageView;
-
-    TextView tv_light;
-
-    TextView tv_back;
+//    private FaceRoundView rectView;
+//
+//    private View mInitView;
 
     String[] permissions = new String[]{
             Manifest.permission.CAMERA,
@@ -62,27 +61,15 @@ public class MainActivity extends BaseActivity implements IPhotoView {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         BarUtils.setStatusBarVisibility(this,false);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main2);
         FaceDetect_sView = (SurfaceView) findViewById(R.id.FaceDetect_sView);
         Showing_sView = (SurfaceView) findViewById(R.id.Showing_sView);
         textureView = findViewById(R.id.texture_view);
-        imageView = findViewById(R.id.image);
-        tv_light = (TextView) findViewById(R.id.tv_light);
-        tv_back = (TextView) findViewById(R.id.tv_back);
-        MediaHelper.mediaOpen();
-
-//        FaceDetect_sView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                pp.getOneShut();
-//            }
-//        });
-
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        Sensor sensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
-
-
+//        rectView = findViewById(R.id.rect_view);
+//        mInitView = findViewById(R.id.camera_layout);
+//        mInitView.setVisibility(View.INVISIBLE);
+        mScreenW = ScreenUtils.getScreenWidth();
+        mScreenH = ScreenUtils.getScreenHeight();
         requestRunPermisssion(permissions, new PermissionListener() {
             @Override
             public void onGranted() {
@@ -101,25 +88,11 @@ public class MainActivity extends BaseActivity implements IPhotoView {
 
     }
 
-    private SensorEventListener listener = new SensorEventListener() {
-
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            // values数组中第一个下标的值就是当前的光照强度
-            float value = event.values[0];
-            tv_light.setText("当前亮度为" + value + " lx");
-        }
-
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-
-    };
 
     private void ScreenBrightnessSet(){
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.System.canWrite(this)) {
-                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
                 intent.setData(Uri.parse("package:" + this.getPackageName()));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 this.startActivity(intent);
@@ -160,22 +133,19 @@ public class MainActivity extends BaseActivity implements IPhotoView {
         pp.onActivityDestroy();
         BrightnessUtils.setWindowBrightness(getWindow(),OriginBrightness);
         BrightnessUtils.setAutoBrightnessEnabled(isAutoBrightnessEnabled);
-        if (sensorManager != null) {
-            sensorManager.unregisterListener(listener);
-        }
-
-        MediaHelper.mediaRealese();
-
     }
 
     @Override
     public void onCaremaText(String s) {
-        tv_back.setText(s);
+
     }
 
     @Override
     public void onGetPhoto(Bitmap bmp) {
-        imageView.setImageBitmap(bmp);
     }
+
+
+
+
 
 }
