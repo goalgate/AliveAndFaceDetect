@@ -13,9 +13,6 @@ public class FaceDetectTools {
 
     private long mNativeObj = 0;
 
-    public FaceDetectTools() {
-    }
-
     public FaceDetectTools(String cascadeName, int minFaceSize) {
         mNativeObj = nativeCreateObject(cascadeName, minFaceSize);
     }
@@ -32,7 +29,6 @@ public class FaceDetectTools {
         nativeSetFaceSize(mNativeObj, size);
     }
 
-
     public void detectRects(byte[] inputImage, int w, int h, ArrayList<Rect> rectS, int rotation,
                             boolean mirror) {
         nativeDetectRects(mNativeObj, inputImage, w, h, rectS, rotation, mirror);
@@ -42,7 +38,6 @@ public class FaceDetectTools {
         nativeDestroyObject(mNativeObj);
         mNativeObj = 0;
     }
-
 
     private static native long nativeCreateObject(String cascadeName, int minFaceSize);
 

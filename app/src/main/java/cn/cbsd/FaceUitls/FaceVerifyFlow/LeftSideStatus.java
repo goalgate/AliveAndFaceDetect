@@ -63,6 +63,9 @@ public class LeftSideStatus extends VerifyStatus {
                 }
                 if (rectS.size() > 0) {
                     SuccessCount++;
+                    if (SuccessCount == threshold/2) {
+                        faceContext.addBitmap(ByteToBMPUtils.byteToBitmap(data,width,height));
+                    }
                     Log.e("LeftSideCount", String.valueOf(SuccessCount));
 
                 }

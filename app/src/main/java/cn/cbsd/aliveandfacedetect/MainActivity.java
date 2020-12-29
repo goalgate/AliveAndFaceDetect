@@ -1,181 +1,119 @@
 package cn.cbsd.aliveandfacedetect;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.net.Uri;
-import android.os.Build;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.view.SurfaceView;
-import android.view.TextureView;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.util.Log;
 
-import com.blankj.utilcode.util.BarUtils;
-import com.blankj.utilcode.util.BrightnessUtils;
+import com.blankj.utilcode.util.ActivityUtils;
+import com.blankj.utilcode.util.ToastUtils;
+import com.cbsd.mvphelper.mvplibrary.Tools.ActivityCollector;
+import com.cbsd.mvphelper.mvplibrary.mvpforView.MVPBaseActivity;
+import com.mining.app.zxing.activity.MipcaActivityCapture;
 
-import java.util.List;
+import butterknife.OnClick;
 
 import cn.cbsd.FaceUitls.FaceVerifyFlow.MediaHelper;
-import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.presenter.PhotoPresenter;
-import cn.cbsd.aliveandfacedetect.Func.Func_Camera.mvp.view.IPhotoView;
+import io.reactivex.functions.Consumer;
 
-public class MainActivity extends BaseActivity implements IPhotoView {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+public class MainActivity extends MVPBaseActivity {
 
-    private SensorManager sensorManager;
+    private final static int SCANNIN_GREQUEST_CODE = 1;
 
-    int OriginBrightness ;
-
-    boolean isAutoBrightnessEnabled;
-
-    PhotoPresenter pp = PhotoPresenter.getInstance();
-
-    SurfaceView FaceDetect_sView;
-
-    SurfaceView Showing_sView;
-
-    TextureView textureView;
-
-    ImageView imageView;
-
-    TextView tv_light;
-
-    TextView tv_back;
+    private final static int FACE_DETECT_CODE = 2;
 
     String[] permissions = new String[]{
             Manifest.permission.CAMERA,
+            Manifest.permission.INTERNET,
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_SETTINGS
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
+    @OnClick(R.id.btn_scan)
+    void Scan() {
+        Intent intent = new Intent();
+        intent.setClass(this, MipcaActivityCapture.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivityForResult(intent, SCANNIN_GREQUEST_CODE);
+    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        BarUtils.setStatusBarVisibility(this,false);
-        setContentView(R.layout.activity_main);
-        FaceDetect_sView = (SurfaceView) findViewById(R.id.FaceDetect_sView);
-        Showing_sView = (SurfaceView) findViewById(R.id.Showing_sView);
-        textureView = findViewById(R.id.texture_view);
-        imageView = findViewById(R.id.image);
-        tv_light = (TextView) findViewById(R.id.tv_light);
-        tv_back = (TextView) findViewById(R.id.tv_back);
+    public int getLayoutId() {
+        return R.layout.activity_main;
+    }
+
+    @Override
+    public void initData(Bundle savedInstanceState) {
         MediaHelper.mediaOpen();
 
-//        FaceDetect_sView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                pp.getOneShut();
-//            }
-//        });
-
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        Sensor sensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
-
-
-        requestRunPermisssion(permissions, new PermissionListener() {
+        getRxPermissions().request(permissions).subscribe(new Consumer<Boolean>() {
             @Override
-            public void onGranted() {
-
-            }
-
-            @Override
-            public void onDenied(List<String> deniedPermission) {
-
-
+            public void accept(Boolean granted) throws Exception {
+                if (granted) {
+                } else {
+                    ToastUtils.showLong("应用未能获取全部权限");
+                }
             }
         });
-        pp.OpenCVPrepare(this);
-        pp.Init(Showing_sView,FaceDetect_sView, textureView);
-        ScreenBrightnessSet();
-
-    }
-
-    private SensorEventListener listener = new SensorEventListener() {
-
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            // values数组中第一个下标的值就是当前的光照强度
-            float value = event.values[0];
-            tv_light.setText("当前亮度为" + value + " lx");
-        }
-
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-
-    };
-
-    private void ScreenBrightnessSet(){
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.System.canWrite(this)) {
-                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                intent.setData(Uri.parse("package:" + this.getPackageName()));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                this.startActivity(intent);
-            } else {
-                if (!BrightnessUtils.isAutoBrightnessEnabled()){
-                    BrightnessUtils.setAutoBrightnessEnabled(true);
-                    isAutoBrightnessEnabled = false;
-                }else {
-                    isAutoBrightnessEnabled = true;
-                }
-                OriginBrightness = BrightnessUtils.getBrightness();
-                BrightnessUtils.setWindowBrightness(getWindow(),255);
-            }
-        }
-
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    public int getOptionsMenuId() {
+        return 0;
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        pp.PhotoPresenterSetView(this);
+    public Object newP() {
+        return null;
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        pp.PhotoPresenterSetView(null);
+    public void onBackPressed() {
+        ActivityCollector.getInstance().finishAll();
     }
+
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        pp.onActivityDestroy();
-        BrightnessUtils.setWindowBrightness(getWindow(),OriginBrightness);
-        BrightnessUtils.setAutoBrightnessEnabled(isAutoBrightnessEnabled);
-        if (sensorManager != null) {
-            sensorManager.unregisterListener(listener);
-        }
-
         MediaHelper.mediaRealese();
 
     }
 
     @Override
-    public void onCaremaText(String s) {
-        tv_back.setText(s);
-    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case SCANNIN_GREQUEST_CODE:
+                if (resultCode == RESULT_OK) {
+                    Bundle bundle = data.getExtras();
+                    Intent intent = new Intent();
+                    intent.putExtras(bundle);
+                    intent.setClass(this, FaceActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivityForResult(intent, FACE_DETECT_CODE);
+                }
+                break;
+            case FACE_DETECT_CODE:
+                if (resultCode == RESULT_OK) {
+                    Bundle bundle = data.getExtras();
+                    String result = bundle.getString("result");
+                    String value = bundle.getString("value");
+                    if (result.equals("true")) {
+                        ToastUtils.showLong("人脸认证成功，识别分数" + value);
+                    } else {
+                        ToastUtils.showLong("人脸认证失败，识别分数" + value);
+                    }
+                }
 
-    @Override
-    public void onGetPhoto(Bitmap bmp) {
-        imageView.setImageBitmap(bmp);
+                break;
+
+            default:
+                break;
+        }
     }
 
 }

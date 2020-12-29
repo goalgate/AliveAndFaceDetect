@@ -58,7 +58,6 @@ public class OpenMouthStatus extends VerifyStatus {
                     Log.e("OpenMouthStatusCount", String.valueOf(SuccessCount));
                 }
             } else {
-                stop();
                 faceContext.setStatus(SmileStatus.getInstance());
 //                faceContext.getStatus().dealData(faceContext, data, width, height, rectS);
             }

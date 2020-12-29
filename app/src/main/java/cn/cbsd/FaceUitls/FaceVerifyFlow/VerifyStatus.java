@@ -26,7 +26,6 @@ public abstract class VerifyStatus {
 
     MediaHelper.VoiceTemplate template = null;
 
-
     public VerifyStatus() {
         this.running = true;
         this.SuccessCount = 0;
@@ -36,10 +35,6 @@ public abstract class VerifyStatus {
             , ArrayList<Rect> rects);
 
     public void stop() {
-        if (tools != null) {
-            tools.stop();
-            tools.release();
-        }
         running = false;
     }
 

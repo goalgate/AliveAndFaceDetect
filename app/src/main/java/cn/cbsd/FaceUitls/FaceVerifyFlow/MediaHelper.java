@@ -21,7 +21,7 @@ public class MediaHelper {
         FrontStatus, LeftSideStatus,
         RightSideStatus, SmileStatus,
         OpenMouthStatus, StopStatus,
-        CompleteStatus
+        CompleteStatus, adjust, OutTIME
     }
 
     private static MediaPlayer mediaPlayer;
@@ -98,6 +98,16 @@ public class MediaHelper {
                 case CompleteStatus:
                     fileDescriptor = AppInit.getContext().getAssets()
                             .openFd("mp3" + File.separator + "CompleteStatus.mp3");
+                    play(fileDescriptor);
+                    break;
+                case adjust:
+                    fileDescriptor = AppInit.getContext().getAssets()
+                            .openFd("mp3" + File.separator + "adjust.mp3");
+                    play(fileDescriptor);
+                    break;
+                case OutTIME:
+                    fileDescriptor = AppInit.getContext().getAssets()
+                            .openFd("mp3" + File.separator + "OutTime.mp3");
                     play(fileDescriptor);
                     break;
                 default:

@@ -5,6 +5,8 @@ import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.blankj.utilcode.util.FileUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -49,6 +51,7 @@ public class FrontStatus extends VerifyStatus {
         } catch (IOException e) {
             Log.e("exception", e.toString());
         }
+
     }
 
     @Override
@@ -62,11 +65,16 @@ public class FrontStatus extends VerifyStatus {
                 }
                 if (rectS.size() > 0) {
                     SuccessCount++;
+                    if (SuccessCount == threshold/2) {
+                        faceContext.addBitmap(ByteToBMPUtils.byteToBitmap(data,width,height));
+                    }
+//                    else if (SuccessCount >= (threshold / 2 - 1) && SuccessCount <= (threshold / 2 + 1)) {
+//                        faceContext.addBitmap(ByteToBMPUtils.byteToBitmap(data,width,height));
+//                    }
                     Log.e("FrontStatusCount", String.valueOf(SuccessCount));
                 }
             } else {
                 try {
-                    stop();
                     faceContext.setStatus(LeftSideStatus.getInstance());
                 } catch (Exception e) {
                     e.printStackTrace();

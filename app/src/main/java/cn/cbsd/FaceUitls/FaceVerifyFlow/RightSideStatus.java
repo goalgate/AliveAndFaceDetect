@@ -45,11 +45,13 @@ public class RightSideStatus extends VerifyStatus {
                 }
                 if (rectS.size() > 0) {
                     SuccessCount++;
+                    if (SuccessCount == threshold/2) {
+                        faceContext.addBitmap(ByteToBMPUtils.byteToBitmap(data,width,height));
+                    }
                     Log.e("RightSideCount", String.valueOf(SuccessCount));
 
                 }
             } else {
-                stop();
                 faceContext.setStatus(CompleteStatus.getInstance());
 //                faceContext.getStatus().dealData(faceContext, data, width, height, rectS);
             }
